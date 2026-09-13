@@ -7,6 +7,7 @@ import {
   matchVerificationRecord,
   type VerificationRecordLike,
 } from '@/features/verification/verification.logic';
+import { ImportService } from '@/features/imports/ImportService';
 import { AppError } from '@/lib/errors';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -14,7 +15,10 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Field } from '@/components/ui/Field';
 import { Alert } from '@/components/ui/Alert';
+import { UserPlus } from 'lucide-react';
 import type { ParticipantRow } from '@/types/database';
 
 const OUTCOME_TONE = { MATCH: 'green', AMBIGUOUS: 'amber', NO_MATCH: 'red' } as const;
@@ -32,6 +36,13 @@ export function VerificationPage() {
   const records = useAsync(() => VerificationService.listRecords(), []);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // Ajout manuel d'un étudiant à la liste officielle de référence.
+  const [nf, setNf] = useState('');
+  const [nl, setNl] = useState('');
+  const [ne, setNe] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addNotice, setAddNotice] = useState<string | null>(null);
 
   const recordList: VerificationRecordLike[] = useMemo(
     () =>
@@ -80,6 +91,81 @@ export function VerificationPage() {
         </Alert>
       )}
       {actionError && <Alert tone="error">{actionError}</Alert>}
+      {addNotice && <Alert tone="success">{addNotice}</Alert>}
+
+      {/* Ajout manuel à la liste officielle (alternative à l'import CSV) */}
+      {canWrite && (
+        <Card>
+          <CardContent className="p-5">
+            <h2 className="font-semibold text-slate-900">
+              Ajouter un étudiant à la liste officielle
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Cette liste sert de référence au matching. Pour un volume important,
+              utilisez plutôt l'import CSV.
+            </p>
+            <form
+              className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-end"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!nf.trim() || !nl.trim()) return;
+                setAdding(true);
+                setActionError(null);
+                setAddNotice(null);
+                void ImportService.importVerificationRecords(
+                  [{ first_name: nf.trim(), last_name: nl.trim(), email: ne.trim() || null }],
+                  'saisie-manuelle',
+                )
+                  .then((res) => {
+                    setAddNotice(
+                      res.inserted > 0
+                        ? `${nf.trim()} ${nl.trim()} ajouté à la liste officielle.`
+                        : "Aucun ajout : cet étudiant figure déjà dans la liste.",
+                    );
+                    setNf('');
+                    setNl('');
+                    setNe('');
+                    records.reload();
+                  })
+                  .catch((err) =>
+                    setActionError(
+                      err instanceof AppError ? err.userMessage : 'Ajout impossible.',
+                    ),
+                  )
+                  .finally(() => setAdding(false));
+              }}
+            >
+              <Field label="Prénom" required>
+                {({ id }) => (
+                  <Input id={id} value={nf} onChange={(e) => setNf(e.target.value)} />
+                )}
+              </Field>
+              <Field label="Nom" required>
+                {({ id }) => (
+                  <Input id={id} value={nl} onChange={(e) => setNl(e.target.value)} />
+                )}
+              </Field>
+              <Field label="Email" hint="Fortement recommandé : fiabilise le matching">
+                {({ id, describedBy }) => (
+                  <Input
+                    id={id}
+                    type="email"
+                    aria-describedby={describedBy}
+                    value={ne}
+                    onChange={(e) => setNe(e.target.value)}
+                  />
+                )}
+              </Field>
+              <Button type="submit" loading={adding}>
+                <UserPlus className="h-4 w-4" /> Ajouter
+              </Button>
+            </form>
+            <p className="mt-3 text-xs text-slate-500">
+              Liste officielle actuelle : {records.data?.length ?? 0} enregistrement(s).
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {loading && <LoadingState label="Chargement…" />}
       {!loading && pending.error && (

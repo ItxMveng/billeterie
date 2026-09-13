@@ -41,7 +41,7 @@ function str(key: string, fallback: string): string {
 // métier définitive n'est inventée ici.
 const FALLBACK_NAME = "Cérémonie d'accueil (à confirmer)";
 const FALLBACK_LOCATION = 'Lieu à confirmer';
-const FALLBACK_DATE = '2026-10-01';
+const FALLBACK_DATE = '2026-10-03';
 
 const name = str('VITE_EVENT_NAME', FALLBACK_NAME);
 const location = str('VITE_EVENT_LOCATION', FALLBACK_LOCATION);
@@ -56,8 +56,8 @@ export const eventConfig: EventConfig = {
   date,
   location,
   currency: str('VITE_CURRENCY', 'EUR'),
-  alumniPriceCents: num('VITE_ALUMNI_PRICE_CENTS', 1000),
-  otherPriceCents: num('VITE_OTHER_PRICE_CENTS', 1500),
+  alumniPriceCents: num('VITE_ALUMNI_PRICE_CENTS', 2500),
+  otherPriceCents: num('VITE_OTHER_PRICE_CENTS', 2500),
 };
 
 /**

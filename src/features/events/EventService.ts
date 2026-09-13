@@ -7,7 +7,7 @@
  * repli sont explicitement marquées comme placeholders.
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase, requireSupabase } from '@/lib/supabase';
 import { toAppError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { eventConfig } from '@/config/event.config';
@@ -57,6 +57,82 @@ function fromRow(row: EventRow): ResolvedEvent {
 }
 
 export const EventService = {
+  /** Tous les événements (staff — policy `events_staff_read`). */
+  async listAll(): Promise<EventRow[]> {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('events')
+      .select('*')
+      .order('date', { ascending: true });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'EventService.listAll' });
+      throw appError;
+    }
+    return (data ?? []) as EventRow[];
+  },
+
+  /**
+   * Crée un événement (ADMIN/SUPER_ADMIN — policy `events_admin_write`).
+   * Les prix sont en CENTIMES (25 € → 2500).
+   */
+  async create(input: {
+    name: string;
+    date: string;
+    location?: string | null;
+    alumni_price_cents: number;
+    other_price_cents: number;
+    currency?: string;
+    status?: EventRow['status'];
+  }): Promise<EventRow> {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('events')
+      .insert({
+        name: input.name.trim(),
+        date: input.date,
+        location: input.location?.trim() || null,
+        alumni_price_cents: input.alumni_price_cents,
+        other_price_cents: input.other_price_cents,
+        currency: input.currency ?? 'EUR',
+        status: input.status ?? 'PUBLISHED',
+      })
+      .select('*')
+      .single();
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'EventService.create' });
+      throw appError;
+    }
+    return data as EventRow;
+  },
+
+  /** Met à jour un événement (nom, date, lieu, prix, statut). */
+  async update(
+    id: string,
+    patch: Partial<
+      Pick<
+        EventRow,
+        | 'name'
+        | 'description'
+        | 'date'
+        | 'location'
+        | 'alumni_price_cents'
+        | 'other_price_cents'
+        | 'currency'
+        | 'status'
+      >
+    >,
+  ): Promise<void> {
+    const client = requireSupabase();
+    const { error } = await client.from('events').update(patch).eq('id', id);
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'EventService.update' });
+      throw appError;
+    }
+  },
+
   /**
    * Renvoie l'événement actif. Ne lève jamais : en cas d'erreur ou d'absence,
    * retombe sur la configuration de repli pour préserver l'affichage public.

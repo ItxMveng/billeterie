@@ -18,11 +18,11 @@ insert into public.events (name, description, date, location, status,
 values (
   'Cérémonie d''accueil (à confirmer)',
   'Cérémonie d''accueil des nouveaux étudiants camerounais.',
-  '2026-10-01',
+  '2026-10-03',
   'Lieu à confirmer',
   'PUBLISHED',
-  1000,
-  1500,
+  2500,
+  2500,
   'EUR'
 )
 on conflict do nothing;

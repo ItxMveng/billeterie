@@ -28,6 +28,47 @@ export const SchoolService = {
     }
   },
 
+  /**
+   * Crée un établissement (ADMIN/SUPER_ADMIN — policy `schools_admin_write`).
+   * Un utilisateur sans le rôle reçoit une erreur d'autorisation de la base.
+   */
+  async create(input: {
+    name: string;
+    short_name?: string | null;
+    is_active?: boolean;
+  }): Promise<SchoolRow> {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('schools')
+      .insert({
+        name: input.name.trim(),
+        short_name: input.short_name?.trim() || null,
+        is_active: input.is_active ?? true,
+      })
+      .select('*')
+      .single();
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'SchoolService.create' });
+      throw appError;
+    }
+    return data as SchoolRow;
+  },
+
+  /** Met à jour un établissement (nom, sigle, activation). */
+  async update(
+    id: string,
+    patch: Partial<Pick<SchoolRow, 'name' | 'short_name' | 'is_active'>>,
+  ): Promise<void> {
+    const client = requireSupabase();
+    const { error } = await client.from('schools').update(patch).eq('id', id);
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'SchoolService.update' });
+      throw appError;
+    }
+  },
+
   /** Liste complète (admin — protégé par la RLS). */
   async listAll(): Promise<SchoolRow[]> {
     const client = requireSupabase();
