@@ -1,37 +1,76 @@
 /**
- * PaymentService — FRONTIÈRE du module de paiement (Wero).
+ * PaymentService — paiements (Wero V1 : déclaration utilisateur + confirmation
+ * administrative). Aucune preuve de paiement n'est acceptée depuis le client :
+ * seul un administrateur autorisé peut confirmer (RPC `admin_confirm_payment`).
  *
- * ⚠️ Sprint 1 : le paiement réel N'EST PAS implémenté. Ce service définit le
- * contrat pour que le Sprint 2 branche Wero sans réécrire le frontend.
- *
- * Règle de sécurité : le montant dû n'est JAMAIS fiable depuis le client.
- * `getDisplayAmountCents` sert uniquement à l'affichage indicatif ; le montant
- * réellement facturé sera calculé et vérifié côté serveur (Edge Function).
+ * Le montant réellement facturé est déterminé côté serveur (register/confirm) ;
+ * `getDisplayAmountCents` reste purement indicatif (délégué à payment.logic).
  */
 
-import { AppError } from '@/lib/errors';
-import { getPaymentRequirement } from '@/features/participants/participant.logic';
-import type { ParticipantType } from '@/types/enums';
-import type { ResolvedEvent } from '@/features/events/EventService';
+import { requireSupabase } from '@/lib/supabase';
+import { toAppError } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import type { PaymentWithParticipant } from '@/types/database';
+import { PaymentStatus } from '@/types/enums';
+import { getDisplayAmountCents } from './payment.logic';
+
+async function rpc<T = unknown>(
+  name: string,
+  args: Record<string, unknown>,
+  scope: string,
+): Promise<T> {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) {
+    const appError = toAppError(error);
+    logger.reportError(appError, { scope });
+    throw appError;
+  }
+  return data as T;
+}
 
 export const PaymentService = {
+  /** Montant indicatif (centimes) — délégué à la logique pure. */
+  getDisplayAmountCents,
+
   /**
-   * Montant indicatif à afficher (centimes), fondé sur la catégorie et les
-   * prix de l'événement. NON fiable : à re-vérifier côté serveur.
+   * Déclaration utilisateur « j'ai effectué le paiement ». Ne confirme JAMAIS
+   * le paiement : passe seulement PENDING → AWAITING_CONFIRMATION.
    */
-  getDisplayAmountCents(type: ParticipantType, event: ResolvedEvent): number {
-    if (!getPaymentRequirement({ participant_type: type })) return 0;
-    return type === 'ALUMNI'
-      ? event.alumniPriceCents
-      : event.otherPriceCents;
+  async submitDeclaration(token: string): Promise<{ status: string }> {
+    return rpc('submit_payment_declaration', { p_token: token }, 'PaymentService.submitDeclaration');
   },
 
-  /** Sprint 2 : initier un paiement Wero. Non disponible au Sprint 1. */
-  async initiatePayment(): Promise<never> {
-    throw new AppError('CONFIG', {
-      userMessage:
-        'Le paiement en ligne sera disponible prochainement.',
-      technicalMessage: 'PaymentService.initiatePayment non implémenté (Sprint 2).',
-    });
+  /** Paiements en attente (admin/finance — protégé par la RLS). */
+  async listPending(): Promise<PaymentWithParticipant[]> {
+    const supabase = requireSupabase();
+    const { data, error } = await supabase
+      .from('payments')
+      .select(
+        '*, participant:participants(first_name,last_name,email,participant_type)',
+      )
+      .in('status', [PaymentStatus.PENDING, PaymentStatus.AWAITING_CONFIRMATION])
+      .order('created_at', { ascending: true });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'PaymentService.listPending' });
+      throw appError;
+    }
+    return (data ?? []) as PaymentWithParticipant[];
+  },
+
+  /** Confirmation administrative (FINANCE/ADMIN/SUPER_ADMIN). Idempotente. */
+  async confirm(paymentId: string, method?: string): Promise<{ ticket_number: string | null }> {
+    return rpc('admin_confirm_payment', { p_payment_id: paymentId, p_method: method ?? null }, 'PaymentService.confirm');
+  },
+
+  /** Rejet administratif d'un paiement. */
+  async reject(paymentId: string, reason?: string): Promise<void> {
+    await rpc('admin_reject_payment', { p_payment_id: paymentId, p_reason: reason ?? null }, 'PaymentService.reject');
+  },
+
+  /** Exemption (dirigeants/officiels) : payment_required = false. Auditée. */
+  async waive(participantId: string, reason?: string): Promise<{ ticket_number: string | null }> {
+    return rpc('admin_waive_payment', { p_participant_id: participantId, p_reason: reason ?? null }, 'PaymentService.waive');
   },
 };

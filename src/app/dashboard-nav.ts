@@ -1,6 +1,8 @@
 import {
   LayoutDashboard,
   Users,
+  BadgeCheck,
+  UploadCloud,
   School,
   CalendarDays,
   CreditCard,
@@ -43,6 +45,18 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     permission: 'participants:read',
   },
   {
+    to: '/dashboard/verification',
+    label: 'Vérification',
+    icon: BadgeCheck,
+    permission: 'participants:write',
+  },
+  {
+    to: '/dashboard/imports',
+    label: 'Imports',
+    icon: UploadCloud,
+    permission: 'participants:write',
+  },
+  {
     to: '/dashboard/ecoles',
     label: 'Écoles',
     icon: School,
@@ -59,14 +73,12 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     label: 'Paiements',
     icon: CreditCard,
     permission: 'payments:read',
-    upcoming: true,
   },
   {
     to: '/dashboard/billets',
     label: 'Billets',
     icon: Ticket,
     permission: 'tickets:read',
-    upcoming: true,
   },
   {
     to: '/dashboard/scanner',

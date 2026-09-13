@@ -5,11 +5,14 @@ import { ProtectedRoute, RequirePermission } from '@/features/auth/ProtectedRout
 
 import { LandingPage } from '@/pages/LandingPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { PortalPage } from '@/pages/PortalPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 import { DashboardHome } from '@/pages/dashboard/DashboardHome';
 import { ParticipantsPage } from '@/pages/dashboard/ParticipantsPage';
+import { VerificationPage } from '@/pages/dashboard/VerificationPage';
+import { ImportsPage } from '@/pages/dashboard/ImportsPage';
 import { SchoolsPage } from '@/pages/dashboard/SchoolsPage';
 import { EventPage } from '@/pages/dashboard/EventPage';
 import { PaymentsPage } from '@/pages/dashboard/PaymentsPage';
@@ -25,6 +28,7 @@ export function AppRouter() {
       <Route element={<PublicLayout />}>
         <Route index element={<LandingPage />} />
         <Route path="inscription" element={<RegisterPage />} />
+        <Route path="mon-billet" element={<PortalPage />} />
       </Route>
 
       <Route path="/login" element={<LoginPage />} />
@@ -38,6 +42,22 @@ export function AppRouter() {
             element={
               <RequirePermission permission="participants:read">
                 <ParticipantsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="verification"
+            element={
+              <RequirePermission permission="participants:write">
+                <VerificationPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="imports"
+            element={
+              <RequirePermission permission="participants:write">
+                <ImportsPage />
               </RequirePermission>
             }
           />

@@ -11,10 +11,12 @@ import type {
   EventStatus,
   ParticipantType,
   PaymentStatus,
+  PaymentProvider,
   RegistrationStatus,
   Role,
   TicketStatus,
   VerificationStatus,
+  VerificationRecordStatus,
 } from './enums';
 
 export interface EventRow {
@@ -53,12 +55,80 @@ export interface ParticipantRow {
   school_id: string | null;
   verification_status: VerificationStatus;
   payment_status: PaymentStatus;
+  payment_required: boolean | null;
+  payment_reference: string | null;
   registration_status: RegistrationStatus;
   ticket_status: TicketStatus;
+  verified_by: string | null;
+  verified_at: string | null;
+  rejected_reason: string | null;
+  source: string;
   checked_in: boolean;
   checked_in_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface PaymentRow {
+  id: string;
+  participant_id: string;
+  event_id: string | null;
+  provider: PaymentProvider | string;
+  reference: string;
+  amount_cents: number;
+  currency: string;
+  status: PaymentStatus;
+  payment_method: string | null;
+  confirmed_at: string | null;
+  confirmed_by: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TicketRow {
+  id: string;
+  participant_id: string;
+  event_id: string | null;
+  ticket_number: string;
+  status: TicketStatus;
+  issued_at: string;
+  issued_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudentVerificationRecordRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  school_id: string | null;
+  external_identifier: string | null;
+  source: string;
+  status: VerificationRecordStatus;
+  matched_participant_id: string | null;
+  matched_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditLogRow {
+  id: string;
+  actor_user_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+/** Vue enrichie d'un paiement avec les infos participant (jointure UI admin). */
+export interface PaymentWithParticipant extends PaymentRow {
+  participant: Pick<
+    ParticipantRow,
+    'first_name' | 'last_name' | 'email' | 'participant_type'
+  > | null;
 }
 
 /** Ligne d'attribution de rôle (RBAC). Un utilisateur peut avoir plusieurs rôles. */

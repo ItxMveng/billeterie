@@ -71,3 +71,34 @@ message explicite.
   sortie : `dist`.
 - Définir les variables d'environnement `VITE_*` dans le projet Vercel.
 - Le routage SPA est géré par `vercel.json` (réécriture vers `index.html`).
+
+---
+
+## Sprint 2 — Cœur métier
+
+Ajouts : vérification des nouveaux étudiants (matching + validation admin),
+paiement Wero V1 (déclaration utilisateur + confirmation administrative),
+import CSV (participants & liste de vérification, dédup + idempotent), tickets
+uniques + QR sécurisé, espace participant par lien privé, audit des actions
+sensibles.
+
+### Migrations à exécuter (dans l'ordre)
+
+```
+supabase/migrations/0003_sprint2_enums.sql
+supabase/migrations/0004_sprint2_business.sql
+supabase/migrations/0005_sprint2_rls.sql
+```
+
+### Nouvelles routes
+
+- Public : `/mon-billet?t=<token>` (suivi, paiement, billet).
+- Admin : `/dashboard/verification`, `/dashboard/imports`, plus `/dashboard/paiements`
+  et `/dashboard/billets` désormais fonctionnels.
+
+### Variables d'environnement ajoutées
+
+`VITE_WERO_BENEFICIARY`, `VITE_WERO_HANDLE`, `VITE_WERO_INSTRUCTIONS` (affichage
+des instructions de paiement — aucune donnée sensible).
+
+Voir `SPRINT_2_REPORT.md` pour le bilan complet.

@@ -94,3 +94,63 @@ contourne la RLS). Procédure détaillée dans `supabase/seed.sql`.
 - Journaliser les erreurs sans exposer de détails techniques à l'utilisateur
   (déjà en place via `AppError` + `logger`).
 - Ne jamais placer de données personnelles dans les URL / query strings.
+
+---
+
+# Sprint 2 — Sécurité complémentaire
+
+## Écriture des statuts sensibles : uniquement côté serveur
+
+`verification = VERIFIED`, `payment = PAID`, `ticket = GENERATED` et l'exemption
+`payment_required = false` ne peuvent être posés **que** par des fonctions
+`SECURITY DEFINER` qui vérifient le rôle de l'appelant (`is_admin`/`is_finance`)
+et journalisent l'action. Conséquences :
+
+- L'inscription publique passe par `register_participant` (RPC). L'INSERT direct
+  public sur `participants` a été **révoqué** (`0005`).
+- Le client ne peut pas s'auto-vérifier, s'auto-payer, s'auto-exempter ni
+  générer un ticket : ces colonnes ne sont jamais écrites directement par lui.
+- Le bouton « J'ai payé » (`submit_payment_declaration`) ne peut que passer
+  `PENDING → AWAITING_CONFIRMATION`, jamais `PAID`.
+
+## Verrouillage des privilèges d'exécution
+
+Les fonctions internes/privilégiées (`_generate_ticket_internal`, `log_audit`,
+générateurs de références, `can_generate_ticket`, `active_event_id`) sont
+**retirées de `PUBLIC`** : elles ne s'exécutent que depuis les fonctions
+`SECURITY DEFINER` (propriétaire). Les RPC publiques sont accordées à
+`anon`/`authenticated` ; les RPC admin uniquement à `authenticated` (avec
+contrôle de rôle interne).
+
+## Accès au billet — pas d'énumération
+
+Aucune route `/ticket/:id`. Le participant accède à son billet via un **token
+privé** (`/mon-billet?t=<token>`) ; le serveur résout par hash. Le QR ne
+contient aucune donnée personnelle, seulement l'URL de check-in avec le token.
+
+## RLS des nouvelles tables
+
+| Table                          | Lecture                              | Écriture            |
+| ------------------------------ | ------------------------------------ | ------------------- |
+| `student_verification_records` | ADMIN/SUPER_ADMIN                    | RPC only            |
+| `payments`                     | FINANCE/ADMIN/SUPER_ADMIN + VIEWER  | RPC only            |
+| `tickets`                      | tout le staff (dont CHECKIN)         | RPC only            |
+| `audit_logs`                   | ADMIN/SUPER_ADMIN                   | RPC only (log_audit)|
+| `import_batches`               | ADMIN/SUPER_ADMIN                   | RPC only            |
+
+Aucune écriture directe n'est autorisée par policy sur ces tables : toutes les
+mutations passent par les RPC contrôlées.
+
+## Matrice RBAC (actions Sprint 2)
+
+| Action              | SUPER_ADMIN | ADMIN | FINANCE | CHECKIN | VIEWER |
+| ------------------- | :---------: | :---: | :-----: | :-----: | :----: |
+| Vérifier étudiant   |      ✓      |   ✓   |         |         |        |
+| Confirmer paiement  |      ✓      |   ✓   |    ✓    |         |        |
+| Rejeter paiement    |      ✓      |   ✓   |    ✓    |         |        |
+| Exemption           |      ✓      |   ✓   |         |         |        |
+| Importer            |      ✓      |   ✓   |         |         |        |
+| Générer ticket      |      ✓      |   ✓   |         |         |        |
+| Annuler ticket      |      ✓      |   ✓   |         |         |        |
+
+(Contrôlé côté serveur par `is_admin()` / `is_finance()`, pas seulement en UI.)

@@ -10,6 +10,9 @@ interface ImportMetaEnv {
   readonly VITE_ALUMNI_PRICE_CENTS: string;
   readonly VITE_OTHER_PRICE_CENTS: string;
   readonly VITE_CURRENCY: string;
+  readonly VITE_WERO_BENEFICIARY: string;
+  readonly VITE_WERO_HANDLE: string;
+  readonly VITE_WERO_INSTRUCTIONS: string;
 }
 
 interface ImportMeta {

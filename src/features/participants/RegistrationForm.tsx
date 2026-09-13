@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2 } from 'lucide-react';
@@ -11,7 +12,7 @@ import {
   PARTICIPANT_TYPE_LABELS,
 } from '@/types/enums';
 import { requiresSchool, getPaymentRequirement } from './participant.logic';
-import { ParticipantService } from './ParticipantService';
+import { ParticipantService, type RegistrationResult } from './ParticipantService';
 import { SchoolService } from '@/features/schools/SchoolService';
 import { EventService, type ResolvedEvent } from '@/features/events/EventService';
 import { PaymentService } from '@/features/payments/PaymentService';
@@ -41,7 +42,7 @@ export function RegistrationForm() {
   const [schools, setSchools] = useState<SchoolRow[]>([]);
   const [event, setEvent] = useState<ResolvedEvent | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [result, setResult] = useState<RegistrationResult | null>(null);
 
   const {
     register,
@@ -72,8 +73,15 @@ export function RegistrationForm() {
     // Re-validation stricte → valeurs transformées (email en minuscules, etc.).
     const values = registrationSchema.parse(raw);
     try {
-      await ParticipantService.createRegistration(values, event?.id ?? null);
-      setSuccess(true);
+      const res = await ParticipantService.register(values, event?.id ?? null);
+      // Le token est le seul moyen de retrouver son billet : on le conserve
+      // localement (confort) mais l'utilisateur est invité à garder le lien.
+      try {
+        localStorage.setItem('portal_token', res.accessToken);
+      } catch {
+        /* stockage indisponible : le lien affiché reste la source */
+      }
+      setResult(res);
     } catch (e) {
       setSubmitError(
         e instanceof AppError
@@ -83,18 +91,49 @@ export function RegistrationForm() {
     }
   });
 
-  if (success) {
+  if (result) {
+    const portalPath = `/mon-billet?t=${encodeURIComponent(result.accessToken)}`;
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-8 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-green-600" aria-hidden="true" />
-        <h2 className="mt-3 text-xl font-semibold text-green-900">
-          Inscription enregistrée
-        </h2>
-        <p className="mt-2 text-sm text-green-800">
-          Votre demande a bien été prise en compte. Les prochaines étapes
-          (vérification ou paiement selon votre catégorie, puis émission du
-          billet) vous seront communiquées ultérieurement.
-        </p>
+      <div className="rounded-xl border border-green-200 bg-green-50 p-6 sm:p-8">
+        <div className="text-center">
+          <CheckCircle2 className="mx-auto h-10 w-10 text-green-600" aria-hidden="true" />
+          <h2 className="mt-3 text-xl font-semibold text-green-900">
+            Inscription enregistrée
+          </h2>
+        </div>
+        <div className="mt-4 space-y-3 text-sm text-green-900">
+          {result.paymentRequired ? (
+            <p>
+              Votre participation est payante. Un paiement sera à effectuer via
+              Wero (référence{' '}
+              <strong className="font-mono">{result.paymentReference}</strong>).
+              Suivez les instructions et confirmez votre paiement depuis votre
+              espace ci-dessous.
+            </p>
+          ) : (
+            <p>
+              Votre participation est gratuite (sous réserve de vérification pour
+              les nouveaux étudiants). Suivez l'état de votre inscription depuis
+              votre espace.
+            </p>
+          )}
+          <Alert tone="warning">
+            <strong>Conservez ce lien privé</strong> — c'est le seul accès à
+            votre billet et au suivi de votre inscription :
+            <div className="mt-2 break-all rounded bg-white/70 p-2 font-mono text-xs">
+              {window.location.origin}
+              {portalPath}
+            </div>
+          </Alert>
+          <div className="pt-1 text-center">
+            <Link
+              to={portalPath}
+              className="inline-flex h-11 items-center rounded-lg bg-brand-700 px-6 font-medium text-white hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
+            >
+              Accéder à mon espace
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

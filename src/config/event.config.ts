@@ -60,6 +60,23 @@ export const eventConfig: EventConfig = {
   otherPriceCents: num('VITE_OTHER_PRICE_CENTS', 1500),
 };
 
+/**
+ * Instructions de paiement Wero — configurables (placeholders tant que non
+ * fournies). Le bénéficiaire/numéro réels doivent être renseignés via VITE_*.
+ */
+export const paymentConfig = {
+  provider: 'Wero',
+  beneficiary: str('VITE_WERO_BENEFICIARY', 'Association (bénéficiaire à confirmer)'),
+  phoneOrHandle: str('VITE_WERO_HANDLE', 'À confirmer'),
+  instructions: str(
+    'VITE_WERO_INSTRUCTIONS',
+    "Effectuez le paiement via Wero au bénéficiaire indiqué, en précisant votre " +
+      'référence de paiement, puis confirmez ci-dessous.',
+  ),
+  isPlaceholder:
+    str('VITE_WERO_BENEFICIARY', '') === '' || str('VITE_WERO_HANDLE', '') === '',
+};
+
 /** Nom de l'association — placeholder tant que non fourni. */
 export const associationConfig = {
   isPlaceholder: true,

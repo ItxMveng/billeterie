@@ -6,6 +6,8 @@ import {
   isVerifiedNewStudent,
   deriveInitialStatuses,
   canIssueTicket,
+  canGenerateTicket,
+  resolvePaymentRequired,
 } from './participant.logic';
 import {
   ParticipantType,
@@ -143,6 +145,99 @@ describe('canIssueTicket', () => {
   it('ALUMNI non payé + confirmé → pas de billet', () => {
     expect(
       canIssueTicket({
+        participant_type: ParticipantType.ALUMNI,
+        payment_status: PaymentStatus.PENDING,
+        registration_status: RegistrationStatus.CONFIRMED,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('resolvePaymentRequired (exemptions)', () => {
+  it("dérive de la catégorie sans exemption explicite", () => {
+    expect(resolvePaymentRequired({ participant_type: ParticipantType.ALUMNI })).toBe(true);
+    expect(resolvePaymentRequired({ participant_type: ParticipantType.NEW_STUDENT })).toBe(false);
+  });
+  it("une exemption explicite prime sur la catégorie (dirigeant ALUMNI exempté)", () => {
+    expect(
+      resolvePaymentRequired({
+        participant_type: ParticipantType.ALUMNI,
+        payment_required: false,
+      }),
+    ).toBe(false);
+  });
+  it("une obligation explicite prime aussi", () => {
+    expect(
+      resolvePaymentRequired({
+        participant_type: ParticipantType.NEW_STUDENT,
+        payment_required: true,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('canGenerateTicket (source de vérité S2)', () => {
+  it('NEW_STUDENT + PENDING → pas de ticket', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.NEW_STUDENT,
+        verification_status: VerificationStatus.PENDING,
+      }),
+    ).toBe(false);
+  });
+  it('NEW_STUDENT + VERIFIED → ticket possible (gratuit)', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.NEW_STUDENT,
+        verification_status: VerificationStatus.VERIFIED,
+      }),
+    ).toBe(true);
+  });
+  it('ALUMNI requis non payé → pas de ticket', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.ALUMNI,
+        payment_status: PaymentStatus.AWAITING_CONFIRMATION,
+      }),
+    ).toBe(false);
+  });
+  it('ALUMNI payé → ticket possible', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.ALUMNI,
+        payment_status: PaymentStatus.PAID,
+      }),
+    ).toBe(true);
+  });
+  it('OTHER payé → ticket possible', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.OTHER,
+        payment_status: PaymentStatus.PAID,
+      }),
+    ).toBe(true);
+  });
+  it('participant exempté (payment_required=false) → ticket sans paiement', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.OTHER,
+        payment_required: false,
+        payment_status: PaymentStatus.NOT_REQUIRED,
+      }),
+    ).toBe(true);
+  });
+  it('inscription REJETÉE → jamais de ticket', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.OTHER,
+        payment_required: false,
+        registration_status: RegistrationStatus.REJECTED,
+      }),
+    ).toBe(false);
+  });
+  it('ne se contente pas de registration=CONFIRMED (alumni confirmé mais non payé)', () => {
+    expect(
+      canGenerateTicket({
         participant_type: ParticipantType.ALUMNI,
         payment_status: PaymentStatus.PENDING,
         registration_status: RegistrationStatus.CONFIRMED,

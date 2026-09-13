@@ -25,6 +25,9 @@ export function PublicLayout() {
             <NavLink to="/" end className={navItem}>
               Accueil
             </NavLink>
+            <NavLink to="/mon-billet" className={navItem}>
+              Mon espace
+            </NavLink>
             <NavLink
               to="/inscription"
               className="inline-flex h-9 items-center rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"

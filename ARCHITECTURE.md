@@ -77,3 +77,38 @@ lib/supabase.ts (client bas-niveau)  →  Supabase (PostgreSQL + RLS)
 `LoadingState`, `EmptyState`, `ErrorState`, `ForbiddenState`,
 `FeaturePlaceholder`, `FullPageLoader` couvrent les états standard. Aucune
 fonctionnalité non implémentée n'est présentée comme fonctionnelle.
+
+---
+
+# Sprint 2 — Ajouts
+
+## Nouvelles features (frontières respectées)
+
+```
+features/
+  verification/  verification.logic.ts (matching pur) + VerificationService (RPC)
+  payments/      payment.logic.ts (machine à états) + PaymentService (RPC)
+  tickets/       TicketService (RPC) + TicketCard (UI)
+  imports/       import-mappers.ts (pur) + ImportService (RPC)
+  portal/        PortalService (statut par token)
+```
+
+## Sources de vérité uniques (métier)
+
+- `getPaymentRequirement` / `resolvePaymentRequired` (exemptions)
+- `canGenerateTicket` (éligibilité) — reflétée côté serveur par `can_generate_ticket`
+- `canTransitionPayment` / `PAYMENT_TRANSITIONS` (machine à états)
+- `matchVerificationRecord` (matching)
+
+Ces fonctions sont **pures**, testées, et jamais recopiées dans des composants.
+
+## Écritures via RPC sécurisées
+
+Les composants UI n'écrivent jamais les statuts sensibles : ils appellent des
+`*Service` qui appellent des RPC `SECURITY DEFINER` (contrôle de rôle + audit +
+idempotence). Le frontend n'est jamais source de vérité (prix, statut, ticket).
+
+## Espace participant
+
+Accès sans compte via un **token privé** (`/mon-billet?t=`), stocké côté client ;
+seul le hash est en base. Le billet (QR) est rendu par `TicketCard`.

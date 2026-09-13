@@ -73,3 +73,56 @@ lecture de `user_roles` dans les policies.
   qu'un accès direct.
 - Envisager la génération des types TS via `supabase gen types` pour remplacer
   `src/types/database.ts` (les frontières d'architecture ne changent pas).
+
+---
+
+# Sprint 2 — Évolutions
+
+Migrations ajoutées (à exécuter dans l'ordre, après 0001/0002) :
+
+- `0003_sprint2_enums.sql` — ajoute `AWAITING_CONFIRMATION` et `REFUNDED` à
+  `payment_status` (isolé car `ALTER TYPE ADD VALUE` doit être committé avant usage).
+- `0004_sprint2_business.sql` — colonnes, tables, fonctions sécurisées, triggers.
+- `0005_sprint2_rls.sql` — RLS des nouvelles tables + verrouillage des privilèges
+  d'exécution des fonctions.
+
+## Nouvelles colonnes `participants`
+
+`payment_required`, `payment_reference`, `verified_by`, `verified_at`,
+`rejected_reason`, `access_token_hash` (SHA-256 du token privé — jamais le token
+en clair), `source` (`PUBLIC`/`IMPORT`).
+
+## Nouvelles tables
+
+- `student_verification_records` — liste officielle (matching).
+- `payments` — transactions (référence unique `PAY-AAAA-00001`, montant en
+  centimes, statut, `confirmed_by/at`, `metadata`). Index unique partiel :
+  un seul paiement actif (`PENDING`/`AWAITING_CONFIRMATION`) par participant.
+- `tickets` — un ticket par participant (`participant_id` unique), numéro unique
+  `EVT-AAAA-00001`. **Aucun secret n'y est stocké** : le QR encode le token
+  d'accès du participant (hashé dans `participants.access_token_hash`).
+- `audit_logs` — journal des actions sensibles.
+- `import_batches` — journalisation des imports.
+
+## Fonctions
+
+- Trigger `set_participant_initial_status` mis à jour : respecte le GUC
+  `app.bypass_status_trigger` (posé par les RPC contrôlées) et dérive
+  `payment_required` sinon.
+- Helpers : `is_finance`, `next_payment_reference`, `next_ticket_number`,
+  `active_event_id`, `log_audit`, `can_generate_ticket` (miroir SQL).
+- RPC publiques : `register_participant`, `submit_payment_declaration`,
+  `get_participant_status`, `get_ticket_by_token`.
+- RPC admin/finance (contrôle de rôle + audit + idempotence) :
+  `admin_verify_student`, `admin_reject_student`, `admin_confirm_payment`,
+  `admin_reject_payment`, `admin_waive_payment`, `admin_generate_ticket`,
+  `admin_cancel_ticket`, `import_participants`, `import_verification_records`.
+
+## Choix : token d'accès unique par participant
+
+Le QR encode `/(...)checkin?t=<token>` où `<token>` est le token d'accès du
+participant. Seul son **hash** (SHA-256) est stocké (`access_token_hash`). Le
+token en clair n'est jamais persisté : il est remis une fois à l'inscription /
+à l'import (liste de liens). Cela satisfait « QR sans donnée personnelle » et
+« stocker un hash plutôt qu'un secret en clair », tout en permettant de
+ré-afficher le billet et, au Sprint 3, de valider le check-in par hash.

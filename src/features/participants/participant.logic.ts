@@ -24,6 +24,14 @@ export interface ParticipantLike {
   verification_status?: VerificationStatus;
   payment_status?: PaymentStatus;
   registration_status?: RegistrationStatus;
+  /**
+   * Exemption/obligation de paiement explicite (colonne DB au Sprint 2).
+   * Si défini, prime sur la dérivation par catégorie (dirigeants, exemptions).
+   * `participant_type` décrit le participant ; `payment_required` décrit son
+   * obligation financière : les deux dimensions sont indépendantes.
+   * `null`/`undefined` = non défini → dérivation par catégorie.
+   */
+  payment_required?: boolean | null;
 }
 
 /**
@@ -48,6 +56,21 @@ export function getPaymentRequirement(participant: ParticipantLike): boolean {
       // Défaut sûr : en cas de type inattendu, on exige le paiement.
       return true;
   }
+}
+
+/**
+ * Obligation de paiement EFFECTIVE d'un participant, exemptions comprises.
+ *
+ * Priorité : une exemption/obligation explicite (`payment_required`, posée par
+ * un administrateur autorisé et auditée) prime sur la dérivation par catégorie.
+ * Ainsi un dirigeant peut être `ALUMNI`/`OTHER` avec `payment_required = false`
+ * sans créer de 4ᵉ catégorie. Voir BUSINESS_RULES.md.
+ */
+export function resolvePaymentRequired(participant: ParticipantLike): boolean {
+  if (typeof participant.payment_required === 'boolean') {
+    return participant.payment_required;
+  }
+  return getPaymentRequirement(participant);
 }
 
 /** La catégorie nécessite-t-elle une vérification de statut ? (NEW_STUDENT) */
@@ -111,19 +134,39 @@ export function deriveInitialStatuses(type: ParticipantType): {
 }
 
 /**
- * Un billet peut-il être émis pour ce participant ?
+ * Conditions métier d'ÉLIGIBILITÉ à la génération d'un billet (Sprint 2).
  *
- * Conditions (Sprint 1 — règles préparées, l'émission réelle vient au S2) :
- * - inscription confirmée ;
- * - NEW_STUDENT : vérification VERIFIED ;
- * - ALUMNI / OTHER : paiement PAID.
+ * SOURCE DE VÉRITÉ UNIQUE de l'éligibilité (réutilisée par l'UI et reflétée
+ * côté serveur dans la fonction SQL `generate_ticket`). Ne se contente JAMAIS
+ * de `registration_status = CONFIRMED` (cf. exigence Sprint 2 §28) :
+ *
+ * - l'inscription ne doit pas être REJETÉE ;
+ * - NEW_STUDENT : vérification VERIFIED obligatoire ;
+ * - si paiement requis (exemptions comprises) : paiement PAID obligatoire.
+ *
+ * Un participant exempté (`payment_required = false`) et une inscription non
+ * rejetée peut recevoir son billet sans paiement.
+ */
+export function canGenerateTicket(participant: ParticipantLike): boolean {
+  if (participant.registration_status === RegistrationStatus.REJECTED) {
+    return false;
+  }
+  if (participant.participant_type === ParticipantType.NEW_STUDENT) {
+    if (!isVerifiedNewStudent(participant)) return false;
+  }
+  if (resolvePaymentRequired(participant)) {
+    return participant.payment_status === PaymentStatus.PAID;
+  }
+  return true;
+}
+
+/**
+ * @deprecated Conservé pour compatibilité (tests Sprint 1). Exige en plus une
+ * inscription CONFIRMED. Préférer `canGenerateTicket` (source de vérité S2).
  */
 export function canIssueTicket(participant: ParticipantLike): boolean {
   if (participant.registration_status !== RegistrationStatus.CONFIRMED) {
     return false;
   }
-  if (participant.participant_type === ParticipantType.NEW_STUDENT) {
-    return isVerifiedNewStudent(participant);
-  }
-  return participant.payment_status === PaymentStatus.PAID;
+  return canGenerateTicket(participant);
 }

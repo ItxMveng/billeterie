@@ -101,3 +101,74 @@ Renforcé par la contrainte SQL `alumni_requires_school` et le schéma Zod.
 | `NEW_STUDENT` | PENDING      | NOT_REQUIRED | PENDING      | NOT_GENERATED |
 | `ALUMNI`      | NOT_REQUIRED | PENDING      | PENDING      | NOT_GENERATED |
 | `OTHER`       | NOT_REQUIRED | PENDING      | PENDING      | NOT_GENERATED |
+
+---
+
+# Sprint 2 — Règles complémentaires
+
+## Machine à états du paiement
+
+Statut d'un paiement (`payments.status`, source de vérité `payment.logic.ts`) :
+
+```
+PENDING ─▶ AWAITING_CONFIRMATION ─▶ PAID ─▶ REFUNDED
+   │              │
+   └──▶ REJECTED  └──▶ REJECTED / PENDING
+PENDING ─▶ FAILED
+```
+
+- `PENDING → AWAITING_CONFIRMATION` : déclenché par l'utilisateur (« J'ai payé »).
+- `→ PAID` : **uniquement** par un administrateur/finance (RPC `admin_confirm_payment`).
+- `REJECTED → PAID` : **interdit**. Toute transition incohérente est refusée
+  (`assertPaymentTransition`).
+- Idempotence : ré-appliquer le même statut est autorisé (sans effet).
+
+## Wero V1
+
+Déclaration utilisateur + confirmation administrative manuelle. Le bouton
+« J'ai effectué le paiement » ne pose **jamais** `PAID` : il passe seulement en
+`AWAITING_CONFIRMATION`. Aucune page de retour, capture ou clic n'est une preuve.
+L'architecture (`PaymentService` → RPC) permet de brancher une API/webhook Wero
+au Sprint 3 sans réécrire le frontend.
+
+## Référence de paiement
+
+Générée côté serveur : `PAY-AAAA-00001` (séquence). Unique, lisible, liée à un
+seul paiement. L'`id` participant n'est jamais utilisé comme référence publique.
+
+## Exemptions (dirigeants / officiels)
+
+`payment_required` est une dimension **indépendante** de `participant_type`. Un
+dirigeant reste `ALUMNI`/`OTHER` avec `payment_required = false` (aucune 4ᵉ
+catégorie). Seule la RPC auditée `admin_waive_payment` (ADMIN/SUPER_ADMIN) peut
+poser une exemption ; un utilisateur public ne peut jamais s'exempter.
+
+## Éligibilité au billet — `canGenerateTicket`
+
+Source de vérité unique (`participant.logic.ts`, reflétée côté serveur par
+`can_generate_ticket`). Ne se contente jamais de `registration = CONFIRMED` :
+
+1. inscription non `REJECTED` ;
+2. `NEW_STUDENT` → `verification = VERIFIED` ;
+3. si paiement requis (exemptions comprises) → `payment = PAID`.
+
+## Vérification des nouveaux étudiants — matching
+
+Priorité : (1) identifiant externe, (2) email normalisé, (3) nom + établissement,
+(4) nom seul → **jamais** un match automatique (validation manuelle). Le résultat
+(`MATCH`/`AMBIGUOUS`/`NO_MATCH`) est une **proposition** : seul un administrateur
+attribue `VERIFIED` (RPC auditée).
+
+## Import & déduplication
+
+- Import prévisualisé → confirmé → dédupliqué → journalisé → idempotent.
+- Déduplication participants : **email normalisé + événement**. Un doublon n'est
+  jamais fusionné automatiquement : il est **ignoré et signalé**.
+- Ré-exécuter le même import n'insère pas de doublons (idempotence par email).
+
+## Personnes déjà payées (import)
+
+Représentées par `payment_status = PAID` + une ligne `payments` avec
+`provider = 'IMPORT'` (statut `PAID`, confirmée). Elles ne sont **jamais**
+réinvitées à payer. Décision : pas de statut `IMPORTED_PAID` distinct — un
+`PAID` d'origine `IMPORT` est plus simple et cohérent avec la machine à états.
