@@ -132,6 +132,9 @@ export const AuditAction = {
   IMPORT_VERIFICATION_RECORDS: 'IMPORT_VERIFICATION_RECORDS',
   GENERATE_TICKET: 'GENERATE_TICKET',
   CANCEL_TICKET: 'CANCEL_TICKET',
+  CHECK_IN: 'CHECK_IN',
+  GRANT_ROLE: 'GRANT_ROLE',
+  REVOKE_ROLE: 'REVOKE_ROLE',
 } as const;
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 

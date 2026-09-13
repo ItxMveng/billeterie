@@ -123,6 +123,16 @@ export interface AuditLogRow {
   created_at: string;
 }
 
+export interface CheckinRow {
+  id: string;
+  ticket_id: string;
+  participant_id: string;
+  checked_in_at: string;
+  checked_in_by: string | null;
+  method: string;
+  metadata: Record<string, unknown>;
+}
+
 /** Vue enrichie d'un paiement avec les infos participant (jointure UI admin). */
 export interface PaymentWithParticipant extends PaymentRow {
   participant: Pick<

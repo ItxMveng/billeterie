@@ -59,6 +59,21 @@ export const PaymentService = {
     return (data ?? []) as PaymentWithParticipant[];
   },
 
+  /** Tous les paiements avec participant (admin/finance — export). */
+  async listAll(): Promise<PaymentWithParticipant[]> {
+    const supabase = requireSupabase();
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*, participant:participants(first_name,last_name,email,participant_type)')
+      .order('created_at', { ascending: false });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'PaymentService.listAll' });
+      throw appError;
+    }
+    return (data ?? []) as PaymentWithParticipant[];
+  },
+
   /** Confirmation administrative (FINANCE/ADMIN/SUPER_ADMIN). Idempotente. */
   async confirm(paymentId: string, method?: string): Promise<{ ticket_number: string | null }> {
     return rpc('admin_confirm_payment', { p_payment_id: paymentId, p_method: method ?? null }, 'PaymentService.confirm');

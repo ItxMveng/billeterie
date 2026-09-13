@@ -1,53 +1,25 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, School, CalendarDays } from 'lucide-react';
+import {
+  Users,
+  UserPlus,
+  GraduationCap,
+  UserRound,
+  CreditCard,
+  BadgeCheck,
+  Ticket,
+  ScanLine,
+} from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
-import { ParticipantService } from '@/features/participants/ParticipantService';
-import { SchoolService } from '@/features/schools/SchoolService';
-import { Card, CardContent } from '@/components/ui/Card';
+import { useAsync } from '@/hooks/useAsync';
+import { StatsService } from '@/features/stats/StatsService';
 import { ROLE_LABELS } from '@/types/enums';
+import { StatTile } from '@/components/ui/StatTile';
+import { LoadingState } from '@/components/common/LoadingState';
+import { ErrorState } from '@/components/common/ErrorState';
 
 export function DashboardHome() {
-  const { user, roles, can } = useAuth();
-  const [participantCount, setParticipantCount] = useState<number | null>(null);
-  const [schoolCount, setSchoolCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (can('participants:read')) {
-      void ParticipantService.list()
-        .then((rows) => setParticipantCount(rows.length))
-        .catch(() => setParticipantCount(null));
-    }
-    if (can('schools:read')) {
-      void SchoolService.listAll()
-        .then((rows) => setSchoolCount(rows.length))
-        .catch(() => setSchoolCount(null));
-    }
-  }, [can]);
-
-  const tiles = [
-    {
-      show: can('participants:read'),
-      to: '/dashboard/participants',
-      icon: Users,
-      label: 'Participants',
-      value: participantCount,
-    },
-    {
-      show: can('schools:read'),
-      to: '/dashboard/ecoles',
-      icon: School,
-      label: 'Écoles',
-      value: schoolCount,
-    },
-    {
-      show: can('events:read'),
-      to: '/dashboard/evenement',
-      icon: CalendarDays,
-      label: 'Événement',
-      value: null,
-    },
-  ].filter((t) => t.show);
+  const { user, roles } = useAuth();
+  const { data, loading, error, reload } = useAsync(() => StatsService.getOverview(), []);
 
   return (
     <div className="space-y-6">
@@ -55,32 +27,47 @@ export function DashboardHome() {
         <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
         <p className="mt-1 text-sm text-slate-600">
           Bienvenue, {user?.email}
-          {roles.length > 0 && (
-            <> — {roles.map((r) => ROLE_LABELS[r]).join(', ')}</>
-          )}
-          .
+          {roles.length > 0 && <> — {roles.map((r) => ROLE_LABELS[r]).join(', ')}</>}.
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tiles.map(({ to, icon: Icon, label, value }) => (
-          <Link key={to} to={to} className="block">
-            <Card className="transition-shadow hover:shadow-md">
-              <CardContent className="flex items-center gap-4 p-5">
-                <span className="rounded-lg bg-brand-50 p-3">
-                  <Icon className="h-6 w-6 text-brand-700" aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-sm text-slate-500">{label}</p>
-                  <p className="text-xl font-semibold text-slate-900">
-                    {value ?? '—'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {loading && <LoadingState label="Chargement des statistiques…" />}
+      {!loading && error && <ErrorState error={error} onRetry={reload} />}
+
+      {!loading && !error && data && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatTile label="Inscrits" value={data.participants_total} icon={Users} />
+            <StatTile label="Nouveaux étudiants" value={data.new_students} icon={UserPlus} />
+            <StatTile label="Anciens" value={data.alumni} icon={GraduationCap} tone="slate" />
+            <StatTile label="Autres / Invités" value={data.others} icon={UserRound} tone="slate" />
+            <StatTile label="Vérifications en attente" value={data.verification_pending} icon={BadgeCheck} tone="amber" />
+            <StatTile label="Paiements en attente" value={data.payment_pending} icon={CreditCard} tone="amber" />
+            <StatTile label="Paiements confirmés" value={data.payment_paid} icon={CreditCard} tone="green" />
+            <StatTile label="Tickets générés" value={data.tickets_generated} icon={Ticket} tone="green" />
+            <StatTile label="Tickets non générés" value={data.tickets_not_generated} icon={Ticket} tone="slate" />
+            <StatTile label="Check-in effectués" value={data.checked_in} icon={ScanLine} tone="green" />
+            <StatTile label="En attente d'entrée" value={data.not_checked_in} icon={ScanLine} tone="amber" />
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <QuickLink to="/dashboard/statistiques" label="Statistiques détaillées" />
+            <QuickLink to="/dashboard/participants" label="Gérer les participants" />
+            <QuickLink to="/dashboard/scanner" label="Scanner" />
+          </div>
+        </>
+      )}
     </div>
+  );
+}
+
+function QuickLink({ to, label }: { to: string; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-800 hover:bg-slate-50"
+    >
+      {label}
+    </Link>
   );
 }

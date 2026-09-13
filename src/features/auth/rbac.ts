@@ -23,7 +23,9 @@ export type Permission =
   | 'tickets:write'
   | 'checkin:operate'
   | 'admins:manage'
-  | 'settings:manage';
+  | 'settings:manage'
+  | 'audit:read'
+  | 'exports:read';
 
 const ALL_PERMISSIONS: Permission[] = [
   'dashboard:access',
@@ -40,6 +42,8 @@ const ALL_PERMISSIONS: Permission[] = [
   'checkin:operate',
   'admins:manage',
   'settings:manage',
+  'audit:read',
+  'exports:read',
 ];
 
 /** Permissions accordées par rôle. */
@@ -58,12 +62,15 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'tickets:write',
     'checkin:operate',
     'settings:manage',
+    'audit:read',
+    'exports:read',
   ],
   [Role.FINANCE]: [
     'dashboard:access',
     'participants:read',
     'payments:read',
     'payments:write',
+    'exports:read',
   ],
   [Role.CHECKIN]: [
     'dashboard:access',

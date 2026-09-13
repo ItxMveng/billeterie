@@ -1,18 +1,37 @@
 /**
- * CheckinService — FRONTIÈRE du module de scan / check-in à l'entrée.
- *
- * ⚠️ Sprint 1 : scanner et check-in NON implémentés (Sprint 3). Le mode hors
- * ligne du scanner n'est pas prétendu fonctionnel. Contrat posé ici.
+ * CheckinService — contrôle d'entrée. La validation est ATOMIQUE et décidée
+ * côté serveur (RPC `validate_checkin`) : le client ne fait jamais confiance
+ * au contenu du QR ni ne décide de l'entrée.
  */
 
-import { AppError } from '@/lib/errors';
+import { requireSupabase } from '@/lib/supabase';
+import { toAppError } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import type { CheckinResult } from './checkin.logic';
+import type { ParticipantType } from '@/types/enums';
+
+export interface CheckinResponse {
+  result: CheckinResult;
+  first_name?: string;
+  last_name?: string;
+  participant_type?: ParticipantType;
+  school_name?: string | null;
+  ticket_number?: string;
+  checked_in_at?: string;
+  first_checkin_at?: string;
+  reason?: string;
+}
 
 export const CheckinService = {
-  /** Sprint 3 : valide un billet scanné et marque le check-in. */
-  async checkIn(): Promise<never> {
-    throw new AppError('CONFIG', {
-      userMessage: 'Le contrôle à l\'entrée sera disponible prochainement.',
-      technicalMessage: 'CheckinService.checkIn non implémenté (Sprint 3).',
-    });
+  /** Valide un token de billet et effectue le check-in (atomique, serveur). */
+  async validate(token: string): Promise<CheckinResponse> {
+    const supabase = requireSupabase();
+    const { data, error } = await supabase.rpc('validate_checkin', { p_token: token });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'CheckinService.validate' });
+      throw appError;
+    }
+    return (data as CheckinResponse) ?? { result: 'ERROR' };
   },
 };
