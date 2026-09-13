@@ -65,3 +65,64 @@ Format par entrée : Problème → Cause → Correction → Test ajouté → Ré
 La machine hôte est lente (analyse antivirus probable) : lint/tests/build durent
 plusieurs minutes. Sans impact sur la validité des résultats. Les commandes ont
 été exécutées avec marqueur de complétion pour fiabiliser la lecture.
+
+---
+
+## Sprint 3
+
+### 8. `audit_logs` inexistante à la création de `log_audit` (bloquant en production)
+- **Problème** : l'exécution du script de migration Sprint 2 échouait —
+  `42P01 : la relation « public.audit_logs » n'existe pas`.
+- **Cause** : `log_audit()` est déclarée `language sql`. PostgreSQL valide le
+  corps d'une fonction SQL **dès sa création** (`check_function_bodies`). Or la
+  table `audit_logs` était créée plus bas dans le même fichier.
+- **Correction** : déplacement de la création de `audit_logs` **avant**
+  `log_audit()` dans `0004_sprint2_business.sql`.
+- **Vérification** : contrôle d'ordre des dépendances sur le bundle complet
+  (`audit_logs` l.53 → `log_audit` l.102 ; `tickets` → `_generate_ticket_internal` ;
+  `checkins` → `validate_checkin`).
+- **Résultat** : migration appliquée avec succès sur le projet Supabase réel.
+
+### 9. pgcrypto hors du `search_path` (CRITIQUE — découvert en test réel)
+- **Problème** : `get_participant_status` / `get_ticket_by_token` renvoyaient
+  `42883 : No function matches the given name`. Toute la chaîne inscription →
+  billet → check-in aurait échoué en production.
+- **Cause** : chez Supabase, l'extension `pgcrypto` est installée dans le schéma
+  **`extensions`**, pas `public`. Nos fonctions `SECURITY DEFINER` déclaraient
+  `set search_path = public`, donc `digest()` et `gen_random_bytes()` étaient
+  introuvables. `CREATE EXTENSION IF NOT EXISTS pgcrypto` était un no-op puisque
+  l'extension existait déjà ailleurs.
+- **Correction** : migration `0008` — `search_path = public, extensions` sur
+  toutes les fonctions `SECURITY DEFINER`.
+- **Test ajouté** : sonde d'intégration contre la base réelle
+  (`scripts de vérification`), rejouable : les RPC publiques doivent répondre
+  HTTP 200 et non 42883.
+- **Résultat** : inscription, statut, déclaration de paiement et lecture de
+  billet fonctionnent sur la base réelle.
+
+### 10. `REVOKE ... FROM PUBLIC` insuffisant chez Supabase (sécurité)
+- **Problème** : `next_ticket_number()` appelable **anonymement** (retournait
+  `EVT-2026-00001`) malgré `revoke all ... from public`.
+- **Cause** : Supabase applique des `DEFAULT PRIVILEGES` accordant `EXECUTE` à
+  `anon` et `authenticated` sur les nouvelles fonctions du schéma `public`.
+  Révoquer à `PUBLIC` ne retire pas ces accords nominatifs.
+- **Correction** : migration `0008` — `REVOKE EXECUTE ... FROM anon,
+  authenticated` explicite sur les fonctions internes, et `FROM anon` sur les
+  RPC administratives (la garde de rôle interne restant la protection
+  principale : défense en profondeur).
+- **Vérification** : `next_ticket_number` → HTTP 401 `permission denied` ;
+  `get_event_stats` / `list_admin_users` → 401 au niveau privilège.
+- **Résultat** : plus aucune fonction interne accessible en anonyme.
+
+### 11. Bundle principal > 500 kB
+- **Problème** : avertissement Vite, chunk principal à 595 kB.
+- **Cause** : `html5-qrcode` (scanner) importé statiquement par le routeur.
+- **Correction** : `React.lazy` + `Suspense` sur `ScannerPage` — la librairie
+  n'est téléchargée que par les agents de contrôle.
+- **Résultat** : chunk principal **595 → 255 kB**, avertissement disparu.
+
+### Leçon transverse
+Les trois bugs 8/9/10 étaient **invisibles en local** : ni le typecheck, ni le
+lint, ni les 175 tests unitaires ne les auraient détectés. Seule l'exécution
+réelle des migrations et des sondes HTTP contre le projet Supabase les a
+révélés. Toute évolution du SQL doit être validée contre une instance réelle.

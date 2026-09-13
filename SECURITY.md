@@ -154,3 +154,54 @@ mutations passent par les RPC contrôlées.
 | Annuler ticket      |      ✓      |   ✓   |         |         |        |
 
 (Contrôlé côté serveur par `is_admin()` / `is_finance()`, pas seulement en UI.)
+
+---
+
+# Sprint 3 — Sécurité vérifiée en conditions réelles
+
+## Matrice RBAC finale
+
+| Action / Permission | SUPER_ADMIN | ADMIN | FINANCE | CHECKIN | VIEWER |
+| ------------------- | :---------: | :---: | :-----: | :-----: | :----: |
+| dashboard:access    |      ✓      |   ✓   |    ✓    |    ✓    |   ✓    |
+| participants:read   |      ✓      |   ✓   |    ✓    |    ✓    |   ✓    |
+| participants:write  |      ✓      |   ✓   |         |         |        |
+| payments:read       |      ✓      |   ✓   |    ✓    |         |   ✓    |
+| payments:write      |      ✓      |       |    ✓    |         |        |
+| tickets:write       |      ✓      |   ✓   |         |         |        |
+| checkin:operate     |      ✓      |   ✓   |         |    ✓    |        |
+| exports:read        |      ✓      |   ✓   |    ✓    |         |        |
+| audit:read          |      ✓      |   ✓   |         |         |        |
+| admins:manage       |      ✓      |       |         |         |        |
+
+Appliquée à quatre niveaux : UI → route → service → RPC/RLS. Un `CHECKIN` ne
+peut ni lire ni modifier les paiements ; un `ADMIN` ne peut pas s'attribuer
+`SUPER_ADMIN` ; le **dernier** `SUPER_ADMIN` ne peut pas être retiré.
+
+## Check-in atomique
+
+`validate_checkin(token)` résout le ticket par **hash du token** (jamais d'après
+le contenu du QR), re-vérifie le paiement même si un ticket existe, puis exécute
+un `UPDATE ... WHERE checked_in = false` : deux scans simultanés produisent un
+seul `VALID`. Contrainte `checkins.ticket_id UNIQUE` en garde-fou.
+
+## Deux pièges Supabase corrigés (migration 0008)
+
+1. **`search_path`** — `pgcrypto` est installé dans le schéma `extensions`.
+   Toute fonction `SECURITY DEFINER` utilisant `digest()` / `gen_random_bytes()`
+   doit déclarer `set search_path = public, extensions`, sinon erreur 42883 à
+   l'exécution.
+2. **`REVOKE ... FROM PUBLIC` ne suffit pas** — les `DEFAULT PRIVILEGES` de
+   Supabase accordent `EXECUTE` nominativement à `anon` et `authenticated`. Il
+   faut révoquer explicitement pour ces rôles.
+
+> Règle : toute nouvelle fonction SQL doit être vérifiée **contre une instance
+> réelle** (privilèges + exécution), pas seulement compilée.
+
+## Vérifications exécutées sur la base de production
+
+RPC administratives et fonctions internes inaccessibles en anonyme ; `INSERT`
+direct sur `participants` refusé ; lecture anonyme de `participants` et
+`payments` renvoyant **0 ligne alors que des lignes existent** (preuve de la
+RLS) ; tokens tronqués/altérés rejetés ; contrainte « ALUMNI sans école »
+appliquée en base ; déclaration de paiement incapable d'atteindre `PAID`.
