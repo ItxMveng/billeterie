@@ -16,6 +16,8 @@ export interface AuthContextValue {
   can: (permission: Permission) => boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Définit le mot de passe de l'utilisateur connecté (invitation / reset). */
+  updatePassword: (password: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

@@ -9,6 +9,7 @@ import { LandingPage } from '@/pages/LandingPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { PortalPage } from '@/pages/PortalPage';
 import { LoginPage } from '@/pages/LoginPage';
+import { SetPasswordPage } from '@/pages/SetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 import { DashboardHome } from '@/pages/dashboard/DashboardHome';
@@ -42,6 +43,7 @@ export function AppRouter() {
       </Route>
 
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/definir-mot-de-passe" element={<SetPasswordPage />} />
 
       {/* Dashboard protégé (authentification + accès dashboard) */}
       <Route path="/dashboard" element={<ProtectedRoute permission="dashboard:access" />}>

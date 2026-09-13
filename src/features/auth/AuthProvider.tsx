@@ -78,6 +78,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) {
+      throw toAppError({ status: 0, message: 'Supabase non configuré.' });
+    }
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      const appError = toAppError({ status: error.status ?? 400, message: error.message });
+      logger.reportError(appError, { scope: 'AuthProvider.updatePassword' });
+      throw appError;
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -102,8 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       can,
       signIn,
       signOut,
+      updatePassword,
     }),
-    [loading, session, user, roles, can, signIn, signOut],
+    [loading, session, user, roles, can, signIn, signOut, updatePassword],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

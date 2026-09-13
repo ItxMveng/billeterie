@@ -18,6 +18,7 @@ function makeAuth(overrides: Partial<AuthContextValue>): AuthContextValue {
     can: (p: Permission) => hasPermission(roles, p),
     signIn: async () => {},
     signOut: async () => {},
+    updatePassword: async () => {},
     ...overrides,
   };
 }
