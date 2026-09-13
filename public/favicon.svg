@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cérémonie d'accueil">
+  <rect width="64" height="64" rx="14" fill="#0f766e"/>
+  <path d="M32 16 L54 26 L32 36 L10 26 Z" fill="#ffffff"/>
+  <path d="M20 31 L20 41 C20 45 44 45 44 41 L44 31 L32 37 Z" fill="#99f6e4"/>
+  <rect x="52" y="26" width="2.4" height="14" rx="1.2" fill="#ffffff"/>
+</svg>
