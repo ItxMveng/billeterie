@@ -1,5 +1,7 @@
+import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { PublicLayout } from '@/layouts/PublicLayout';
+import { FullPageLoader } from '@/components/common/FullPageLoader';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { ProtectedRoute, RequirePermission } from '@/features/auth/ProtectedRoute';
 
@@ -10,14 +12,22 @@ import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 import { DashboardHome } from '@/pages/dashboard/DashboardHome';
+import { StatisticsPage } from '@/pages/dashboard/StatisticsPage';
 import { ParticipantsPage } from '@/pages/dashboard/ParticipantsPage';
+import { ParticipantDetailPage } from '@/pages/dashboard/ParticipantDetailPage';
+import { ExportsPage } from '@/pages/dashboard/ExportsPage';
+import { AuditPage } from '@/pages/dashboard/AuditPage';
 import { VerificationPage } from '@/pages/dashboard/VerificationPage';
 import { ImportsPage } from '@/pages/dashboard/ImportsPage';
 import { SchoolsPage } from '@/pages/dashboard/SchoolsPage';
 import { EventPage } from '@/pages/dashboard/EventPage';
 import { PaymentsPage } from '@/pages/dashboard/PaymentsPage';
 import { TicketsPage } from '@/pages/dashboard/TicketsPage';
-import { ScannerPage } from '@/pages/dashboard/ScannerPage';
+// Chargé à la demande : la librairie de scan QR est volumineuse et n'est
+// utile qu'aux agents de contrôle (réduit le bundle initial pour tous).
+const ScannerPage = lazy(() =>
+  import('@/pages/dashboard/ScannerPage').then((m) => ({ default: m.ScannerPage })),
+);
 import { AdminsPage } from '@/pages/dashboard/AdminsPage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 
@@ -38,10 +48,42 @@ export function AppRouter() {
         <Route element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route
+            path="statistiques"
+            element={
+              <RequirePermission permission="dashboard:access">
+                <StatisticsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
             path="participants"
             element={
               <RequirePermission permission="participants:read">
                 <ParticipantsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="participants/:id"
+            element={
+              <RequirePermission permission="participants:read">
+                <ParticipantDetailPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="exports"
+            element={
+              <RequirePermission permission="exports:read">
+                <ExportsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="audit"
+            element={
+              <RequirePermission permission="audit:read">
+                <AuditPage />
               </RequirePermission>
             }
           />
@@ -97,7 +139,9 @@ export function AppRouter() {
             path="scanner"
             element={
               <RequirePermission permission="checkin:operate">
-                <ScannerPage />
+                <Suspense fallback={<FullPageLoader label="Chargement du scanner…" />}>
+                  <ScannerPage />
+                </Suspense>
               </RequirePermission>
             }
           />

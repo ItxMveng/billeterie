@@ -68,3 +68,33 @@ describe('ProtectedRoute — sécurité', () => {
     expect(screen.queryByText('PAGE LOGIN')).not.toBeInTheDocument();
   });
 });
+
+describe('ProtectedRoute — tentatives d\'escalade de privilèges', () => {
+  const escalations: Array<{ name: string; role: Role; permission: Permission }> = [
+    { name: 'CHECKIN → paiements', role: Role.CHECKIN, permission: 'payments:write' },
+    { name: 'CHECKIN → exports', role: Role.CHECKIN, permission: 'exports:read' },
+    { name: 'FINANCE → gestion des administrateurs', role: Role.FINANCE, permission: 'admins:manage' },
+    { name: 'FINANCE → check-in', role: Role.FINANCE, permission: 'checkin:operate' },
+    { name: 'VIEWER → écriture participants', role: Role.VIEWER, permission: 'participants:write' },
+    { name: 'VIEWER → audit', role: Role.VIEWER, permission: 'audit:read' },
+    { name: 'ADMIN → gestion des administrateurs', role: Role.ADMIN, permission: 'admins:manage' },
+  ];
+
+  for (const { name, role, permission } of escalations) {
+    it(`refuse : ${name}`, () => {
+      renderWithAuth(makeAuth({ isAuthenticated: true, roles: [role] }), permission);
+      expect(screen.getByText('Accès refusé')).toBeInTheDocument();
+      expect(screen.queryByText('CONTENU PROTÉGÉ')).not.toBeInTheDocument();
+    });
+  }
+
+  it('CHECKIN accède bien au scanner (permission légitime)', () => {
+    renderWithAuth(makeAuth({ isAuthenticated: true, roles: [Role.CHECKIN] }), 'checkin:operate');
+    expect(screen.getByText('CONTENU PROTÉGÉ')).toBeInTheDocument();
+  });
+
+  it('FINANCE accède bien aux paiements (permission légitime)', () => {
+    renderWithAuth(makeAuth({ isAuthenticated: true, roles: [Role.FINANCE] }), 'payments:write');
+    expect(screen.getByText('CONTENU PROTÉGÉ')).toBeInTheDocument();
+  });
+});

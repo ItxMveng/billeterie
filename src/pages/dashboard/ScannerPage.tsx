@@ -43,6 +43,7 @@ function feedback(ok: boolean) {
 export function ScannerPage() {
   const [scanning, setScanning] = useState(false);
   const [camError, setCamError] = useState<string | null>(null);
+  const [netError, setNetError] = useState<string | null>(null);
   const [result, setResult] = useState<CheckinResponse | null>(null);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -64,11 +65,14 @@ export function ScannerPage() {
     try {
       const res = await CheckinService.validate(token);
       setResult(res);
+      setNetError(null);
       feedback(res.result === 'VALID');
     } catch (e) {
-      logger.reportError(e instanceof AppError ? e : new AppError('UNKNOWN', { cause: e }), {
-        scope: 'ScannerPage.validate',
-      });
+      const appError = e instanceof AppError ? e : new AppError('UNKNOWN', { cause: e });
+      logger.reportError(appError, { scope: 'ScannerPage.validate' });
+      // Message utilisateur explicite (réseau indisponible, session expirée,
+      // permission refusée…) — jamais de détail technique.
+      setNetError(appError.userMessage);
       setResult({ result: 'ERROR' });
       feedback(false);
     } finally {
@@ -139,6 +143,12 @@ export function ScannerPage() {
       </header>
 
       {camError && <Alert tone="error">{camError}</Alert>}
+      {netError && (
+        <Alert tone="error" title="Contrôle impossible">
+          {netError} Le contrôle nécessite une connexion : aucun mode hors ligne
+          n'est activé (voir SPRINT_3_REPORT).
+        </Alert>
+      )}
 
       <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-black">
         <div id={REGION_ID} className="min-h-[260px] w-full" />

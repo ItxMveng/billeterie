@@ -10,6 +10,9 @@ import {
   ScanLine,
   ShieldCheck,
   Settings,
+  BarChart3,
+  Download,
+  History,
   type LucideIcon,
 } from 'lucide-react';
 import type { Permission } from '@/features/auth/rbac';
@@ -37,6 +40,12 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     icon: LayoutDashboard,
     permission: 'dashboard:access',
     end: true,
+  },
+  {
+    to: '/dashboard/statistiques',
+    label: 'Statistiques',
+    icon: BarChart3,
+    permission: 'dashboard:access',
   },
   {
     to: '/dashboard/participants',
@@ -85,20 +94,29 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     label: 'Scanner',
     icon: ScanLine,
     permission: 'checkin:operate',
-    upcoming: true,
+  },
+  {
+    to: '/dashboard/exports',
+    label: 'Exports',
+    icon: Download,
+    permission: 'exports:read',
+  },
+  {
+    to: '/dashboard/audit',
+    label: 'Audit',
+    icon: History,
+    permission: 'audit:read',
   },
   {
     to: '/dashboard/administrateurs',
     label: 'Administrateurs',
     icon: ShieldCheck,
     permission: 'admins:manage',
-    upcoming: true,
   },
   {
     to: '/dashboard/parametres',
     label: 'Paramètres',
     icon: Settings,
     permission: 'settings:manage',
-    upcoming: true,
   },
 ];

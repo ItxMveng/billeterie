@@ -21,11 +21,12 @@ function escapeCell(value: unknown): string {
   return s;
 }
 
-/** Construit une chaîne CSV (RFC-4180-ish) à partir de lignes typées. */
-export function toCsv<T extends Record<string, unknown>>(
-  rows: T[],
-  columns: CsvColumn<T>[],
-): string {
+/**
+ * Construit une chaîne CSV (RFC-4180-ish) à partir de lignes typées.
+ * Pas de contrainte `Record<string, unknown>` : les `interface` ne la
+ * satisfont pas (absence d'index signature implicite).
+ */
+export function toCsv<T>(rows: T[], columns: CsvColumn<T>[]): string {
   const header = columns.map((c) => escapeCell(c.header)).join(',');
   const lines = rows.map((row) =>
     columns
