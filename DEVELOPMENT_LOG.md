@@ -126,3 +126,23 @@ Les trois bugs 8/9/10 étaient **invisibles en local** : ni le typecheck, ni le
 lint, ni les 175 tests unitaires ne les auraient détectés. Seule l'exécution
 réelle des migrations et des sondes HTTP contre le projet Supabase les a
 révélés. Toute évolution du SQL doit être validée contre une instance réelle.
+
+### 12. `min(uuid)` inexistant — inscription des nouveaux étudiants cassée
+- **Problème** : après application de la migration 0009, toute inscription d'un
+  `NEW_STUDENT` échouait avec `42883 : function min(uuid) does not exist`.
+- **Cause** : `try_auto_verify_new_student` utilisait
+  `select count(*), min(id) into v_count, v_record_id`. PostgreSQL ne fournit
+  **pas** d'agrégat `min()` pour le type `uuid` (contrairement aux types
+  numériques, texte ou date). Le corps d'une fonction PL/pgSQL n'étant pas
+  validé à la création, l'erreur n'apparaît qu'à la première exécution.
+- **Correction** : migration `0010` — on compte d'abord, puis on récupère
+  l'identifiant par un `select ... limit 1` séparé, uniquement si le compte
+  vaut 1.
+- **Détection** : sonde d'inscription réelle contre le projet Supabase après
+  déploiement. Ni le typecheck, ni le lint, ni les 175 tests ne pouvaient
+  l'attraper — c'est du SQL exécuté côté serveur.
+- **Résultat** : inscription rétablie ; vérification automatique fonctionnelle.
+
+> Rappel : une fonction PL/pgSQL qui « se crée » sans erreur n'est pas une
+> fonction qui marche. Chaque nouvelle RPC doit être **appelée au moins une
+> fois** contre une vraie base avant d'être considérée comme livrée.
