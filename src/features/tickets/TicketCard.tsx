@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { GraduationCap, MapPin, CalendarDays, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { PARTICIPANT_TYPE_LABELS } from '@/types/enums';
 import { formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-import { downloadTicketPdf } from './ticket-pdf';
+import { buildTicketPdfBlob, ticketPdfFileName } from './ticket-pdf';
 import type { TicketView } from './TicketService';
 
 /**
@@ -25,7 +24,7 @@ export function TicketCard({
 }) {
   const checkinUrl = `${window.location.origin}/checkin?t=${encodeURIComponent(token)}`;
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,19 +40,29 @@ export function TicketCard({
     };
   }, [checkinUrl]);
 
-  const onDownload = async () => {
+  // Le PDF est préparé dès que le QR est disponible, AVANT tout clic :
+  // un téléchargement déclenché après un `await` est bloqué sur iOS Safari.
+  useEffect(() => {
     if (!qrDataUrl) return;
-    setPdfError(null);
-    setDownloading(true);
-    try {
-      await downloadTicketPdf(ticket, qrDataUrl);
-    } catch (e) {
-      logger.error('PDF generation failed', { cause: e });
-      setPdfError("Le téléchargement a échoué. Réessayez.");
-    } finally {
-      setDownloading(false);
-    }
-  };
+    let active = true;
+    let createdUrl: string | null = null;
+
+    buildTicketPdfBlob(ticket, qrDataUrl)
+      .then((blob) => {
+        if (!active) return;
+        createdUrl = URL.createObjectURL(blob);
+        setPdfUrl(createdUrl);
+      })
+      .catch((e) => {
+        logger.error('PDF build failed', { cause: e });
+        if (active) setPdfError('Préparation du PDF impossible.');
+      });
+
+    return () => {
+      active = false;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [qrDataUrl, ticket]);
 
   return (
     <div className="mx-auto max-w-sm space-y-3">
@@ -119,19 +128,25 @@ export function TicketCard({
         </div>
       </div>
 
-      <Button
-        className="w-full"
-        variant="outline"
-        onClick={() => void onDownload()}
-        loading={downloading}
-        disabled={!qrDataUrl}
-      >
-        <Download className="h-4 w-4" aria-hidden="true" />
-        Télécharger mon billet (PDF)
-      </Button>
-      {pdfError && (
-        <p role="alert" className="text-center text-sm text-red-600">
-          {pdfError}
+      {/* Vrai lien de téléchargement (pas de gestionnaire asynchrone) */}
+      {pdfUrl ? (
+        <>
+          <a
+            href={pdfUrl}
+            download={ticketPdfFileName(ticket)}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-navy-200 bg-white font-semibold text-navy-800 transition-colors hover:bg-navy-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Télécharger mon billet (PDF)
+          </a>
+          <p className="text-center text-xs text-navy-400">
+            Sur iPhone, si le fichier s'ouvre au lieu de se télécharger : touchez
+            l'icône de partage, puis « Enregistrer dans Fichiers ».
+          </p>
+        </>
+      ) : (
+        <p className="text-center text-sm text-navy-500" role="status">
+          {pdfError ?? 'Préparation du PDF…'}
         </p>
       )}
     </div>
