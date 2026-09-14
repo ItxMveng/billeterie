@@ -45,6 +45,17 @@ const baseParticipant = z.object({
   // École : optionnelle au niveau du champ, rendue obligatoire par le refine
   // pour la catégorie ALUMNI.
   school_id: z.string().uuid('École invalide.').optional().nullable(),
+  /**
+   * Numéro étudiant officiel — FACULTATIF. Proposé aux nouveaux étudiants :
+   * il fiabilise la vérification automatique contre la liste officielle.
+   * Aucune donnée sensible n'est demandée par ailleurs.
+   */
+  external_identifier: z
+    .string()
+    .trim()
+    .max(40, 'Identifiant trop long.')
+    .optional()
+    .or(z.literal('')),
 });
 
 /**

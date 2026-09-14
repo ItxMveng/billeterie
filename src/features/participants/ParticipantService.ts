@@ -48,6 +48,12 @@ export interface RegistrationResult {
   paymentReference: string | null;
   amountCents: number;
   currency: string;
+  /** Statut de vérification à l'issue de l'inscription (décidé serveur). */
+  verificationStatus: VerificationStatus;
+  /** true si la vérification automatique a réussi (liste officielle). */
+  autoVerified: boolean;
+  /** Numéro de billet si émis immédiatement. */
+  ticketNumber: string | null;
 }
 
 export const ParticipantService = {
@@ -66,6 +72,7 @@ export const ParticipantService = {
         phone: values.phone,
         participant_type: values.participant_type,
         school_id: values.school_id ?? null,
+        external_identifier: values.external_identifier || null,
       },
     });
     if (error) {
@@ -81,6 +88,9 @@ export const ParticipantService = {
       paymentReference: (d.payment_reference as string) ?? null,
       amountCents: Number(d.amount_cents ?? 0),
       currency: String(d.currency ?? 'EUR'),
+      verificationStatus: (d.verification_status as VerificationStatus) ?? 'NOT_REQUIRED',
+      autoVerified: Boolean(d.auto_verified),
+      ticketNumber: (d.ticket_number as string) ?? null,
     };
   },
 

@@ -102,6 +102,27 @@ export function RegistrationForm() {
           </h2>
         </div>
         <div className="mt-4 space-y-3 text-sm text-green-900">
+          {/* Vérification automatique réussie : billet déjà émis */}
+          {result.autoVerified && (
+            <Alert tone="success" title="Statut vérifié automatiquement">
+              Vous figurez sur la liste officielle des nouveaux étudiants. Votre
+              participation est <strong>gratuite</strong> et votre billet
+              {result.ticketNumber ? (
+                <> <strong className="font-mono">{result.ticketNumber}</strong> est</>
+              ) : (
+                <> est</>
+              )}{' '}
+              déjà disponible dans votre espace.
+            </Alert>
+          )}
+          {!result.autoVerified && result.verificationStatus === 'PENDING' && (
+            <Alert tone="info" title="Vérification en cours">
+              Nous n'avons pas pu confirmer automatiquement votre statut de
+              nouveau étudiant. Un membre de l'association va le vérifier
+              manuellement — vous n'avez rien à payer en attendant.
+            </Alert>
+          )}
+
           {result.paymentRequired ? (
             <p>
               Votre participation est payante. Un paiement sera à effectuer via
@@ -112,9 +133,8 @@ export function RegistrationForm() {
             </p>
           ) : (
             <p>
-              Votre participation est gratuite (sous réserve de vérification pour
-              les nouveaux étudiants). Suivez l'état de votre inscription depuis
-              votre espace.
+              Votre participation est gratuite. Suivez l'état de votre
+              inscription et retrouvez votre billet depuis votre espace.
             </p>
           )}
           <Alert tone="warning">
@@ -273,6 +293,25 @@ export function RegistrationForm() {
                 </option>
               ))}
             </Select>
+          )}
+        </Field>
+      )}
+
+      {/* Numéro étudiant — facultatif, fiabilise la vérification automatique */}
+      {selectedType === ParticipantType.NEW_STUDENT && (
+        <Field
+          label="Numéro étudiant"
+          hint="Facultatif — permet de vérifier votre statut immédiatement."
+          error={errors.external_identifier?.message}
+        >
+          {({ id, describedBy }) => (
+            <Input
+              id={id}
+              aria-describedby={describedBy}
+              autoComplete="off"
+              invalid={Boolean(errors.external_identifier)}
+              {...register('external_identifier')}
+            />
           )}
         </Field>
       )}

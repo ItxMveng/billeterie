@@ -189,9 +189,6 @@ export function LandingPage() {
               journée est faite pour toi. Profite d'un moment unique pour
               t'informer, échanger et créer des liens durables.
             </p>
-            <p className="mt-4 max-w-lg leading-relaxed text-navy-600">
-              {associationConfig.shortDescription}
-            </p>
           </div>
 
           {/* Collage type polaroid */}
@@ -376,6 +373,52 @@ export function LandingPage() {
               <Pill icon={QrCode}>Billet avec QR code</Pill>
               <Pill icon={ShieldCheck}>Entrée sécurisée</Pill>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════ L'ASSOCIATION ═══════════════════════ */}
+      <section className="bg-navy-50 py-20 lg:py-24">
+        <div className="container grid items-center gap-14 lg:grid-cols-[1.1fr_1fr]">
+          <div className="relative">
+            <div className="overflow-hidden rounded-4xl shadow-lift">
+              <SmartImage
+                src="/images/association.jpg"
+                alt="Membres de l'association réunis"
+                caption="public/images/association.jpg"
+                tone="navy"
+                className="aspect-[16/10]"
+              />
+            </div>
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-5 -right-4 hidden h-24 w-24 rounded-3xl bg-brand-500/90 lg:block"
+            />
+          </div>
+
+          <div>
+            <Eyebrow>Qui sommes-nous</Eyebrow>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-navy-900 sm:text-4xl">
+              {associationConfig.name}
+            </h2>
+            {associationConfig.isPlaceholder && (
+              <p className="mt-2 text-xs font-medium text-brand-700">
+                Informations à confirmer
+              </p>
+            )}
+            <p className="mt-5 leading-relaxed text-navy-700">
+              {associationConfig.shortDescription}
+            </p>
+            <p className="mt-4 leading-relaxed text-navy-600">
+              Tout au long de l'année, nous organisons des rencontres, des
+              moments festifs et des temps d'entraide pour que personne ne
+              traverse seul son arrivée.
+            </p>
+            <p className="mt-6">
+              <span className="handwritten text-2xl text-brand-600">
+                Une communauté, un avenir.
+              </span>
+            </p>
           </div>
         </div>
       </section>

@@ -63,6 +63,8 @@ export interface ParticipantRow {
   verified_at: string | null;
   rejected_reason: string | null;
   source: string;
+  /** Numéro étudiant officiel — facultatif, fiabilise la vérification. */
+  external_identifier: string | null;
   checked_in: boolean;
   checked_in_at: string | null;
   created_at: string;
