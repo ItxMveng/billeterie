@@ -12,22 +12,23 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { useToast } from '@/components/ui/useToast';
 
 export function TicketsPage() {
   const { can } = useAuth();
   const canWrite = can('tickets:write');
   const { data, loading, error, reload } = useAsync(() => ParticipantService.list(), []);
+  const toast = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
-  const run = async (fn: () => Promise<unknown>, id: string) => {
-    setActionError(null);
+  const run = async (fn: () => Promise<unknown>, id: string, ok = "Action effectuée.") => {
     setBusyId(id);
     try {
       await fn();
+      toast.success(ok);
       reload();
     } catch (e) {
-      setActionError(e instanceof AppError ? e.userMessage : 'Action impossible.');
+      toast.error(e instanceof AppError ? e.userMessage : 'Action impossible.');
     } finally {
       setBusyId(null);
     }
@@ -46,7 +47,6 @@ export function TicketsPage() {
       {!canWrite && (
         <Alert tone="warning">Consultation seule : génération non autorisée pour votre rôle.</Alert>
       )}
-      {actionError && <Alert tone="error">{actionError}</Alert>}
 
       {loading && <LoadingState label="Chargement…" />}
       {!loading && error && <ErrorState error={error} onRetry={reload} />}
@@ -94,7 +94,7 @@ export function TicketsPage() {
                         <Button
                           size="sm"
                           loading={busyId === p.id}
-                          onClick={() => run(() => TicketService.generate(p.id), p.id)}
+                          onClick={() => run(() => TicketService.generate(p.id), p.id, 'Billet généré.')}
                         >
                           Générer
                         </Button>
@@ -105,7 +105,7 @@ export function TicketsPage() {
                           variant="outline"
                           disabled={busyId === p.id}
                           onClick={() =>
-                            run(() => TicketService.cancel(p.id, 'Annulation manuelle'), p.id)
+                            run(() => TicketService.cancel(p.id, 'Annulation manuelle'), p.id, 'Billet annulé — le participant en est informé.')
                           }
                         >
                           Annuler

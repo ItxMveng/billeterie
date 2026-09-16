@@ -179,6 +179,48 @@ export const ParticipantService = {
     };
   },
 
+  /** Modifie les coordonnées d'un participant (jamais ses statuts). Admin. */
+  async update(
+    id: string,
+    input: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone: string;
+      school_id?: string | null;
+      external_identifier?: string | null;
+    },
+  ): Promise<void> {
+    const supabase = requireSupabase();
+    const { error } = await supabase.rpc('admin_update_participant', {
+      p_participant_id: id,
+      p_first_name: input.first_name,
+      p_last_name: input.last_name,
+      p_email: input.email,
+      p_phone: input.phone,
+      p_school_id: input.school_id ?? null,
+      p_external_identifier: input.external_identifier ?? null,
+    });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'ParticipantService.update' });
+      throw appError;
+    }
+  },
+
+  /** Supprime définitivement un participant. SUPER_ADMIN uniquement. */
+  async remove(id: string): Promise<void> {
+    const supabase = requireSupabase();
+    const { error } = await supabase.rpc('admin_delete_participant', {
+      p_participant_id: id,
+    });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'ParticipantService.remove' });
+      throw appError;
+    }
+  },
+
   /** Nouveaux étudiants en attente de vérification (file admin). */
   async listPendingVerification(): Promise<ParticipantRow[]> {
     const supabase = requireSupabase();

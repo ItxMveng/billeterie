@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { loginSchema, type LoginValues } from '@/schemas/auth.schema';
 import { useAuth } from '@/features/auth/useAuth';
 import { AppError } from '@/lib/errors';
@@ -54,7 +54,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <GraduationCap className="mx-auto h-8 w-8 text-brand-700" aria-hidden="true" />
+          <BrandLogo size={56} rounded="rounded-2xl" className="mx-auto shadow-soft" />
           <h1 className="mt-2 text-xl font-bold text-slate-900">
             Administration
           </h1>

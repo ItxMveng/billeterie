@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, CheckCircle2, ShieldQuestion } from 'lucide-react';
+import { CheckCircle2, ShieldQuestion } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { setPasswordSchema, type SetPasswordValues } from '@/schemas/auth.schema';
 import { useAuth } from '@/features/auth/useAuth';
 import { clearAuthFlow, peekAuthFlow } from '@/features/auth/auth-flow';
@@ -60,9 +61,7 @@ export function SetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-cream px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-glow">
-            <GraduationCap className="h-7 w-7" aria-hidden="true" />
-          </span>
+          <BrandLogo size={56} rounded="rounded-2xl" className="mx-auto shadow-soft" />
           <h1 className="mt-4 font-display text-2xl font-bold text-navy-900">
             {flow === 'recovery' ? 'Nouveau mot de passe' : 'Bienvenue dans l\'équipe'}
           </h1>

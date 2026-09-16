@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Pencil, Save, X, Trash2 } from 'lucide-react';
 import { useAsync } from '@/hooks/useAsync';
 import { useAuth } from '@/features/auth/useAuth';
 import { ParticipantService } from '@/features/participants/ParticipantService';
@@ -23,6 +23,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { Input } from '@/components/ui/Input';
+import { Field } from '@/components/ui/Field';
+import { Select } from '@/components/ui/Select';
+import { ConfirmButton } from '@/components/ui/ConfirmButton';
+import { useToast } from '@/components/ui/useToast';
+import { SchoolService } from '@/features/schools/SchoolService';
 
 export function ParticipantDetailPage() {
   const { id = '' } = useParams();
@@ -31,17 +37,21 @@ export function ParticipantDetailPage() {
     () => ParticipantService.getDetail(id),
     [id],
   );
+  const toast = useToast();
+  const navigate = useNavigate();
+  const schools = useAsync(() => SchoolService.listAll(), []);
   const [busy, setBusy] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", school_id: "", external_identifier: "" });
 
-  const run = async (fn: () => Promise<unknown>) => {
-    setActionError(null);
+  const run = async (fn: () => Promise<unknown>, okMessage = "Action effectuée.") => {
     setBusy(true);
     try {
       await fn();
+      toast.success(okMessage);
       reload();
     } catch (e) {
-      setActionError(e instanceof AppError ? e.userMessage : 'Action impossible.');
+      toast.error(e instanceof AppError ? e.userMessage : 'Action impossible.');
     } finally {
       setBusy(false);
     }
@@ -67,11 +77,107 @@ export function ParticipantDetailPage() {
             </p>
           </header>
 
-          {actionError && <Alert tone="error">{actionError}</Alert>}
-
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
-              <CardHeader><CardTitle>Profil</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
+                <CardTitle>Profil</CardTitle>
+                {can('participants:write') && !editing && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const p = data.participant;
+                      setForm({
+                        first_name: p.first_name,
+                        last_name: p.last_name,
+                        email: p.email,
+                        phone: p.phone,
+                        school_id: p.school_id ?? '',
+                        external_identifier: p.external_identifier ?? '',
+                      });
+                      setEditing(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" /> Modifier
+                  </Button>
+                )}
+              </CardHeader>
+
+              {editing ? (
+                <CardContent>
+                  <form
+                    className="grid gap-3 sm:grid-cols-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void run(
+                        () =>
+                          ParticipantService.update(id, {
+                            first_name: form.first_name,
+                            last_name: form.last_name,
+                            email: form.email,
+                            phone: form.phone,
+                            school_id: form.school_id || null,
+                            external_identifier: form.external_identifier || null,
+                          }),
+                        'Coordonnées mises à jour.',
+                      ).then(() => setEditing(false));
+                    }}
+                  >
+                    <Field label="Prénom" required>
+                      {({ id: fid }) => (
+                        <Input id={fid} value={form.first_name}
+                          onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+                      )}
+                    </Field>
+                    <Field label="Nom" required>
+                      {({ id: fid }) => (
+                        <Input id={fid} value={form.last_name}
+                          onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+                      )}
+                    </Field>
+                    <Field label="Email" required>
+                      {({ id: fid }) => (
+                        <Input id={fid} type="email" value={form.email}
+                          onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                      )}
+                    </Field>
+                    <Field label="Téléphone">
+                      {({ id: fid }) => (
+                        <Input id={fid} type="tel" value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                      )}
+                    </Field>
+                    <Field
+                      label="École"
+                      hint={data.participant.participant_type === 'ALUMNI' ? 'Obligatoire pour un ancien étudiant' : undefined}
+                    >
+                      {({ id: fid, describedBy }) => (
+                        <Select id={fid} aria-describedby={describedBy} value={form.school_id}
+                          onChange={(e) => setForm({ ...form, school_id: e.target.value })}>
+                          <option value="">— Aucune —</option>
+                          {(schools.data ?? []).map((sc) => (
+                            <option key={sc.id} value={sc.id}>{sc.name}</option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                    <Field label="Numéro étudiant">
+                      {({ id: fid }) => (
+                        <Input id={fid} value={form.external_identifier}
+                          onChange={(e) => setForm({ ...form, external_identifier: e.target.value })} />
+                      )}
+                    </Field>
+                    <div className="flex gap-2 sm:col-span-2">
+                      <Button type="submit" size="sm" loading={busy}>
+                        <Save className="h-4 w-4" aria-hidden="true" /> Enregistrer
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setEditing(false)}>
+                        <X className="h-4 w-4" aria-hidden="true" /> Annuler
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              ) : (
               <CardContent className="space-y-2 text-sm">
                 <Row label="Catégorie" value={PARTICIPANT_TYPE_LABELS[data.participant.participant_type]} />
                 <Row label="Inscription" value={REGISTRATION_STATUS_LABELS[data.participant.registration_status]} />
@@ -87,6 +193,7 @@ export function ParticipantDetailPage() {
                   ? `Oui — ${data.participant.checked_in_at ? new Date(data.participant.checked_in_at).toLocaleString('fr-FR') : ''}`
                   : 'Non'} />
               </CardContent>
+              )}
             </Card>
 
             {/* Actions */}
@@ -131,15 +238,40 @@ export function ParticipantDetailPage() {
                     </Button>
                   )}
 
-                {can('tickets:write') && !data.ticket && canGenerateTicket(data.participant) && (
-                  <Button size="sm" disabled={busy} onClick={() => run(() => TicketService.generate(id))}>
-                    Générer le ticket
-                  </Button>
-                )}
+                {/* Couvre aussi la RÉÉMISSION d'un billet annulé. */}
+                {can('tickets:write') &&
+                  data.ticket?.status !== 'GENERATED' &&
+                  canGenerateTicket(data.participant) && (
+                    <Button
+                      size="sm"
+                      disabled={busy}
+                      onClick={() =>
+                        run(
+                          () => TicketService.generate(id),
+                          data.ticket?.status === 'CANCELLED'
+                            ? 'Billet rétabli.'
+                            : 'Billet généré.',
+                        )
+                      }
+                    >
+                      {data.ticket?.status === 'CANCELLED'
+                        ? 'Rétablir le billet'
+                        : 'Générer le billet'}
+                    </Button>
+                  )}
                 {can('tickets:write') && data.ticket?.status === 'GENERATED' && (
-                  <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => TicketService.cancel(id, 'Annulation manuelle'))}>
-                    Annuler le ticket
-                  </Button>
+                  <ConfirmButton
+                    confirmLabel="Annuler le billet"
+                    loading={busy}
+                    onConfirm={() =>
+                      void run(
+                        () => TicketService.cancel(id, 'Annulation manuelle'),
+                        'Billet annulé. Le participant en est informé dans son espace.',
+                      )
+                    }
+                  >
+                    Annuler le billet
+                  </ConfirmButton>
                 )}
 
                 {!can('participants:write') && !can('payments:write') && !can('tickets:write') && (
@@ -191,6 +323,31 @@ export function ParticipantDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          {can('admins:manage') && (
+            <Card className="border-red-200">
+              <CardHeader><CardTitle>Zone sensible</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <Alert tone="warning">
+                  La suppression est <strong>définitive</strong> : billet, paiements
+                  et historique d'entrée sont effacés. Préférez l'annulation du
+                  billet si la personne ne vient simplement pas.
+                </Alert>
+                <ConfirmButton
+                  confirmLabel="Supprimer définitivement"
+                  loading={busy}
+                  onConfirm={() =>
+                    void run(
+                      () => ParticipantService.remove(id),
+                      'Participant supprimé.',
+                    ).then(() => navigate('/dashboard/participants'))
+                  }
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden="true" /> Supprimer ce participant
+                </ConfirmButton>
+              </CardContent>
+            </Card>
+          )}
 
           <p className="text-xs text-slate-400">Inscrit le {formatDate(data.participant.created_at)}.</p>
         </>

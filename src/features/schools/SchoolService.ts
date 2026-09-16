@@ -69,6 +69,20 @@ export const SchoolService = {
     }
   },
 
+  /**
+   * Supprime un établissement. Refusé par le serveur s'il est référencé par
+   * des participants (il faut alors le désactiver plutôt que le supprimer).
+   */
+  async remove(id: string): Promise<void> {
+    const client = requireSupabase();
+    const { error } = await client.rpc('admin_delete_school', { p_school_id: id });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'SchoolService.remove' });
+      throw appError;
+    }
+  },
+
   /** Liste complète (admin — protégé par la RLS). */
   async listAll(): Promise<SchoolRow[]> {
     const client = requireSupabase();

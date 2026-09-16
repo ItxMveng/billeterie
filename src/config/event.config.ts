@@ -19,6 +19,8 @@ interface EventConfig {
   isPlaceholder: boolean;
   name: string;
   date: string; // ISO (YYYY-MM-DD)
+  /** Heure de début (HH:MM). */
+  startTime: string;
   location: string;
   currency: string;
   /** Prix indicatifs en centimes (affichage uniquement). */
@@ -39,21 +41,21 @@ function str(key: string, fallback: string): string {
 
 // Valeurs de repli explicitement marquées « à confirmer » : aucune donnée
 // métier définitive n'est inventée ici.
-const FALLBACK_NAME = "Cérémonie d'accueil (à confirmer)";
-const FALLBACK_LOCATION = 'Lieu à confirmer';
+const FALLBACK_NAME = "Cérémonie d'accueil";
+const FALLBACK_LOCATION = '31 rue de Vendée, 29200 Brest';
 const FALLBACK_DATE = '2026-10-03';
+const FALLBACK_START = '19:00';
 
 const name = str('VITE_EVENT_NAME', FALLBACK_NAME);
 const location = str('VITE_EVENT_LOCATION', FALLBACK_LOCATION);
 const date = str('VITE_EVENT_DATE', FALLBACK_DATE);
 
 export const eventConfig: EventConfig = {
-  isPlaceholder:
-    name === FALLBACK_NAME ||
-    location === FALLBACK_LOCATION ||
-    name.includes('à confirmer'),
+  // Les informations sont désormais confirmées : plus de mention « à confirmer ».
+  isPlaceholder: false,
   name,
   date,
+  startTime: str('VITE_EVENT_START_TIME', FALLBACK_START),
   location,
   currency: str('VITE_CURRENCY', 'EUR'),
   alumniPriceCents: num('VITE_ALUMNI_PRICE_CENTS', 2500),
@@ -77,12 +79,15 @@ export const paymentConfig = {
     str('VITE_WERO_BENEFICIARY', '') === '' || str('VITE_WERO_HANDLE', '') === '',
 };
 
-/** Nom de l'association — placeholder tant que non fourni. */
+/** Identité de l'association (informations confirmées). */
 export const associationConfig = {
-  isPlaceholder: true,
-  name: 'Association des étudiants camerounais (nom à confirmer)',
+  isPlaceholder: false,
+  name: 'Club-Pro Breizh Afriture',
+  shortName: 'CPBA',
   shortDescription:
-    "Association accompagnant l'arrivée et l'intégration des étudiants " +
-    'camerounais dans les différentes écoles.',
-  contactEmail: 'contact@association.example',
+    "Le Club-Pro Breizh Afriture accompagne l'arrivée et l'intégration des " +
+    'étudiants camerounais en Bretagne : entraide, rencontres et moments ' +
+    'de partage tout au long de l\'année.',
+  contactEmail: 'contact@cpba-community.org',
+  address: '31 rue de Vendée, 29200 Brest',
 };

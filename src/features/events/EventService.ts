@@ -20,6 +20,8 @@ export interface ResolvedEvent {
   name: string;
   description: string | null;
   date: string;
+  /** Heure de début (HH:MM) ou null. */
+  startTime: string | null;
   location: string | null;
   currency: string;
   alumniPriceCents: number;
@@ -34,6 +36,7 @@ function fromConfig(): ResolvedEvent {
     name: eventConfig.name,
     description: null,
     date: eventConfig.date,
+    startTime: eventConfig.startTime,
     location: eventConfig.location,
     currency: eventConfig.currency,
     alumniPriceCents: eventConfig.alumniPriceCents,
@@ -48,6 +51,7 @@ function fromRow(row: EventRow): ResolvedEvent {
     name: row.name,
     description: row.description,
     date: row.date,
+    startTime: row.start_time,
     location: row.location,
     currency: row.currency,
     alumniPriceCents: row.alumni_price_cents,

@@ -16,10 +16,10 @@ on conflict do nothing;
 insert into public.events (name, description, date, location, status,
                            alumni_price_cents, other_price_cents, currency)
 values (
-  'Cérémonie d''accueil (à confirmer)',
+  'Cérémonie d''accueil',
   'Cérémonie d''accueil des nouveaux étudiants camerounais.',
   '2026-10-03',
-  'Lieu à confirmer',
+  '31 rue de Vendée, 29200 Brest',
   'PUBLISHED',
   2500,
   2500,

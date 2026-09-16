@@ -19,6 +19,7 @@ import { EventService, type ResolvedEvent } from '@/features/events/EventService
 import { associationConfig } from '@/config/event.config';
 import { formatDate, formatMoney } from '@/lib/utils';
 import { SmartImage } from '@/components/ui/SmartImage';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 /* -------------------------------------------------------------------------- */
 /* Contenu — modifiable sans toucher à la mise en page                        */
@@ -27,21 +28,21 @@ import { SmartImage } from '@/components/ui/SmartImage';
 const PILIERS = [
   { icon: Users, color: 'navy', title: 'Rencontres', text: 'Fais connaissance avec ta promo et ton école.' },
   { icon: Sparkles, color: 'brand', title: 'Découvertes', text: 'Explore les assos, les services et les opportunités.' },
-  { icon: Music, color: 'navy', title: 'Animations', text: 'Une ambiance conviviale et festive toute la journée.' },
+  { icon: Music, color: 'navy', title: 'Animations', text: 'Une ambiance conviviale et festive toute la soirée.' },
   { icon: HeartHandshake, color: 'brand', title: "Esprit d'équipe", text: 'Ensemble, on va plus loin.' },
 ] as const;
 
 const PROGRAMME = [
-  { time: 'À confirmer', title: 'Accueil des participants', text: 'Émargement et remise des badges.' },
-  { time: 'À confirmer', title: "Mot de l'association", text: "Présentation des activités de l'année." },
-  { time: 'À confirmer', title: 'Présentation des écoles', text: "Parcours, conseils et retours d'expérience." },
-  { time: 'À confirmer', title: 'Moment convivial', text: 'Rencontres entre promotions.' },
+  { time: '19h00', title: 'Accueil des participants', text: 'Émargement et remise des badges.' },
+  { time: '19h30', title: "Mot de l'association", text: "Présentation du CPBA et des activités de l'année." },
+  { time: '20h00', title: 'Parrainage', text: 'Chaque nouvel arrivant est mis en relation avec un parrain ou une marraine.' },
+  { time: '21h00', title: 'Moment convivial', text: 'Rencontres entre promotions autour d\'un buffet.' },
 ];
 
 const RAISONS = [
   { icon: HeartHandshake, title: 'Créer des liens', text: 'Rencontre des personnes qui partagent ton parcours.' },
   { icon: Sparkles, title: 'Découvrir', text: 'Explore ton environnement et les opportunités.' },
-  { icon: Rocket, title: "T'amuser", text: 'Profite d\'une journée festive et conviviale.' },
+  { icon: Rocket, title: "T'amuser", text: 'Profite d\'une soirée festive et conviviale.' },
   { icon: Users, title: "T'engager", text: 'Participe à la vie de ta communauté.' },
 ];
 
@@ -137,7 +138,7 @@ export function LandingPage() {
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-navy-100">
-              Une journée pour faire connaissance, découvrir la vie étudiante et
+              Une soirée pour faire connaissance, découvrir la vie étudiante et
               partager un moment convivial avec toute la communauté.
             </p>
 
@@ -145,12 +146,12 @@ export function LandingPage() {
             <div className="mt-9 flex flex-wrap gap-4">
               <InfoCard
                 icon={CalendarDays}
-                title={event ? formatDate(event.date) : 'Date à confirmer'}
-                subtitle={event?.isPlaceholder ? 'à confirmer' : 'Journée complète'}
+                title={event ? formatDate(event.date) : '—'}
+                subtitle={event?.startTime ? `À partir de ${event.startTime.slice(0, 5).replace(':', 'h')}` : 'Soirée'}
               />
               <InfoCard
                 icon={MapPin}
-                title={event?.location ?? 'Lieu à confirmer'}
+                title={event?.location ?? associationConfig.address}
                 subtitle="Lieu de la cérémonie"
               />
             </div>
@@ -186,7 +187,7 @@ export function LandingPage() {
             </h2>
             <p className="mt-6 max-w-lg leading-relaxed text-navy-700">
               Que tu sois nouvel étudiant, ancien ou simplement invité, cette
-              journée est faite pour toi. Profite d'un moment unique pour
+              soirée est faite pour toi. Profite d'un moment unique pour
               t'informer, échanger et créer des liens durables.
             </p>
           </div>
@@ -254,7 +255,7 @@ export function LandingPage() {
           <div>
             <Eyebrow>Le programme</Eyebrow>
             <h2 className="mt-4 font-display text-3xl font-bold text-navy-900 sm:text-4xl">
-              Une journée riche en découvertes
+              Une soirée riche en découvertes
             </h2>
 
             <ol className="mt-10">
@@ -398,14 +399,12 @@ export function LandingPage() {
 
           <div>
             <Eyebrow>Qui sommes-nous</Eyebrow>
-            <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-navy-900 sm:text-4xl">
-              {associationConfig.name}
-            </h2>
-            {associationConfig.isPlaceholder && (
-              <p className="mt-2 text-xs font-medium text-brand-700">
-                Informations à confirmer
-              </p>
-            )}
+            <div className="mt-5 flex items-center gap-4">
+              <BrandLogo size={64} rounded="rounded-2xl" className="shadow-soft" />
+              <h2 className="font-display text-3xl font-bold leading-tight text-navy-900 sm:text-4xl">
+                {associationConfig.name}
+              </h2>
+            </div>
             <p className="mt-5 leading-relaxed text-navy-700">
               {associationConfig.shortDescription}
             </p>
@@ -484,7 +483,7 @@ export function LandingPage() {
             <div className="relative">
               <Eyebrow light center>Prêt à vivre cette belle aventure ?</Eyebrow>
               <h2 className="mx-auto mt-4 max-w-2xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-                Rejoins-nous pour une journée inoubliable !
+                Rejoins-nous pour une soirée inoubliable !
               </h2>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <CtaPrimary to="/inscription">Je m'inscris maintenant</CtaPrimary>

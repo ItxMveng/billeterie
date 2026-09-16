@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X, Ticket } from 'lucide-react';
+import { Menu, X, Ticket, MapPin, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { associationConfig } from '@/config/event.config';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 const SECTIONS = [
   { href: '/#a-propos', label: 'À propos' },
@@ -17,17 +18,15 @@ function Logo({ light }: { light?: boolean }) {
       to="/"
       className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 rounded-lg"
     >
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-glow">
-        <GraduationCap className="h-6 w-6" aria-hidden="true" />
-      </span>
+      <BrandLogo size={44} rounded="rounded-xl" />
       <span className="leading-none">
         <span
           className={cn(
-            'block font-display text-xl font-extrabold',
+            'block font-display text-lg font-extrabold',
             light ? 'text-white' : 'text-navy-900',
           )}
         >
-          Bienvenue
+          Club-Pro Breizh Afriture
         </span>
         <span
           className={cn(
@@ -35,7 +34,7 @@ function Logo({ light }: { light?: boolean }) {
             light ? 'text-navy-200' : 'text-navy-500',
           )}
         >
-          Nouveaux · Ensemble
+          Cérémonie d'accueil
         </span>
       </span>
     </Link>
@@ -192,22 +191,23 @@ export function PublicLayout() {
 
             <div>
               <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
-                L'association
+                Nous contacter
               </h2>
-              <p className="mt-4 text-sm">
-                {associationConfig.name}
-                {associationConfig.isPlaceholder && (
-                  <span className="ml-1 text-xs text-brand-300">(à confirmer)</span>
-                )}
-              </p>
-              <p className="mt-2 text-sm">
-                <a
-                  href={`mailto:${associationConfig.contactEmail}`}
-                  className="transition-colors hover:text-brand-300"
-                >
-                  {associationConfig.contactEmail}
-                </a>
-              </p>
+              <address className="mt-4 space-y-3 text-sm not-italic">
+                <p className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+                  <span>{associationConfig.address}</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+                  <a
+                    href={`mailto:${associationConfig.contactEmail}`}
+                    className="transition-colors hover:text-brand-300"
+                  >
+                    {associationConfig.contactEmail}
+                  </a>
+                </p>
+              </address>
             </div>
           </div>
 

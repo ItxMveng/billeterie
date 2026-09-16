@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { AuthFlowRedirect } from '@/features/auth/AuthFlowRedirect';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { ToastProvider } from '@/components/ui/ToastProvider';
 import { AppRouter } from '@/app/router';
 
 export default function App() {
@@ -9,8 +10,10 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <AuthFlowRedirect />
-          <AppRouter />
+          <ToastProvider>
+            <AuthFlowRedirect />
+            <AppRouter />
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

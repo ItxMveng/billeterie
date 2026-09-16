@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { useToast } from '@/components/ui/useToast';
 
 function tone(s: PaymentStatus) {
   return s === 'AWAITING_CONFIRMATION' ? 'amber' : 'neutral';
@@ -28,17 +29,17 @@ export function PaymentsPage() {
     () => PaymentService.listPending(),
     [],
   );
+  const toast = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
-  const run = async (fn: () => Promise<unknown>, id: string) => {
-    setActionError(null);
+  const run = async (fn: () => Promise<unknown>, id: string, ok = "Action effectuée.") => {
     setBusyId(id);
     try {
       await fn();
+      toast.success(ok);
       reload();
     } catch (e) {
-      setActionError(e instanceof AppError ? e.userMessage : 'Action impossible.');
+      toast.error(e instanceof AppError ? e.userMessage : 'Action impossible.');
     } finally {
       setBusyId(null);
     }
@@ -59,7 +60,6 @@ export function PaymentsPage() {
           Votre rôle permet la consultation mais pas la confirmation des paiements.
         </Alert>
       )}
-      {actionError && <Alert tone="error">{actionError}</Alert>}
 
       {loading && <LoadingState label="Chargement des paiements…" />}
       {!loading && error && <ErrorState error={error} onRetry={reload} />}
@@ -101,7 +101,7 @@ export function PaymentsPage() {
                   <Button
                     size="sm"
                     loading={busyId === pay.id}
-                    onClick={() => run(() => PaymentService.confirm(pay.id, 'WERO'), pay.id)}
+                    onClick={() => run(() => PaymentService.confirm(pay.id, 'WERO'), pay.id, 'Paiement confirmé — le billet est émis.')}
                   >
                     Confirmer
                   </Button>
@@ -109,7 +109,7 @@ export function PaymentsPage() {
                     size="sm"
                     variant="danger"
                     disabled={busyId === pay.id}
-                    onClick={() => run(() => PaymentService.reject(pay.id, 'Rejet manuel'), pay.id)}
+                    onClick={() => run(() => PaymentService.reject(pay.id, 'Rejet manuel'), pay.id, 'Paiement rejeté — le participant en est informé.')}
                   >
                     Rejeter
                   </Button>

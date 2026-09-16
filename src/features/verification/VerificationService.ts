@@ -42,6 +42,40 @@ export const VerificationService = {
     return (data ?? []) as StudentVerificationRecordRow[];
   },
 
+  /** Modifie un enregistrement de la liste officielle. Admin, audité. */
+  async updateRecord(
+    id: string,
+    input: {
+      first_name: string;
+      last_name: string;
+      email?: string | null;
+      school_id?: string | null;
+      external_identifier?: string | null;
+    },
+  ): Promise<void> {
+    await rpc(
+      'admin_update_verification_record',
+      {
+        p_record_id: id,
+        p_first_name: input.first_name,
+        p_last_name: input.last_name,
+        p_email: input.email ?? null,
+        p_school_id: input.school_id ?? null,
+        p_external_identifier: input.external_identifier ?? null,
+      },
+      'VerificationService.updateRecord',
+    );
+  },
+
+  /** Supprime un enregistrement de la liste officielle. Admin, audité. */
+  async deleteRecord(id: string): Promise<void> {
+    await rpc(
+      'admin_delete_verification_record',
+      { p_record_id: id },
+      'VerificationService.deleteRecord',
+    );
+  },
+
   /** Vérifie un nouveau étudiant (VERIFIED). Idempotent, audité. */
   async verify(participantId: string, notes?: string): Promise<{ ticket_number: string | null }> {
     return rpc('admin_verify_student', { p_participant_id: participantId, p_notes: notes ?? null }, 'VerificationService.verify');

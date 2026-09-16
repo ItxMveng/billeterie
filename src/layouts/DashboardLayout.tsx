@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
-import { GraduationCap, LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/useAuth';
 import { DASHBOARD_NAV } from '@/app/dashboard-nav';
@@ -57,7 +58,7 @@ export function DashboardLayout() {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
-            <GraduationCap className="h-6 w-6 text-brand-700" aria-hidden="true" />
+            <BrandLogo size={32} rounded="rounded-lg" />
             <span className="hidden sm:inline">Administration</span>
           </Link>
         </div>

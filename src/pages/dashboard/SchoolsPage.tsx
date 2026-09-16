@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Save, X, Pencil } from 'lucide-react';
+import { Plus, Save, X, Pencil, Trash2 } from 'lucide-react';
 import { useAsync } from '@/hooks/useAsync';
 import { useAuth } from '@/features/auth/useAuth';
 import { SchoolService } from '@/features/schools/SchoolService';
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Field } from '@/components/ui/Field';
 import { Alert } from '@/components/ui/Alert';
+import { ConfirmButton } from '@/components/ui/ConfirmButton';
+import { useToast } from '@/components/ui/useToast';
 
 export function SchoolsPage() {
   const { can } = useAuth();
@@ -22,24 +24,21 @@ export function SchoolsPage() {
 
   const [name, setName] = useState('');
   const [shortName, setShortName] = useState('');
+  const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editShort, setEditShort] = useState('');
 
   const run = async (key: string, fn: () => Promise<unknown>, ok: string) => {
-    setActionError(null);
-    setNotice(null);
     setBusy(key);
     try {
       await fn();
-      setNotice(ok);
+      toast.success(ok);
       reload();
     } catch (e) {
-      setActionError(e instanceof AppError ? e.userMessage : 'Action impossible.');
+      toast.error(e instanceof AppError ? e.userMessage : 'Action impossible.');
     } finally {
       setBusy(null);
     }
@@ -81,8 +80,6 @@ export function SchoolsPage() {
       {!canWrite && (
         <Alert tone="warning">Consultation seule : ajout et modification réservés aux administrateurs.</Alert>
       )}
-      {actionError && <Alert tone="error">{actionError}</Alert>}
-      {notice && <Alert tone="success">{notice}</Alert>}
 
       {canWrite && (
         <Card>
@@ -181,6 +178,16 @@ export function SchoolsPage() {
                         >
                           {s.is_active ? 'Désactiver' : 'Activer'}
                         </Button>
+                        <ConfirmButton
+                          confirmLabel="Supprimer définitivement"
+                          loading={busy === s.id}
+                          onConfirm={() =>
+                            void run(s.id, () => SchoolService.remove(s.id), 'École supprimée.')
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          <span className="sr-only">Supprimer {s.name}</span>
+                        </ConfirmButton>
                       </>
                     )}
                   </div>
