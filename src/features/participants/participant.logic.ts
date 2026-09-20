@@ -79,12 +79,13 @@ export function requiresVerification(type: ParticipantType): boolean {
 }
 
 /**
- * Une ancienne école est-elle obligatoire ?
- * - ALUMNI : oui.
- * - NEW_STUDENT / OTHER : non.
+ * Un établissement est-il obligatoire ?
+ * - NEW_STUDENT : oui — l'école dans laquelle il étudie.
+ * - ALUMNI      : oui — son ancienne école.
+ * - OTHER       : non.
  */
 export function requiresSchool(type: ParticipantType): boolean {
-  return type === ParticipantType.ALUMNI;
+  return type === ParticipantType.NEW_STUDENT || type === ParticipantType.ALUMNI;
 }
 
 /**

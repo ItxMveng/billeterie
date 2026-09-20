@@ -36,9 +36,9 @@ describe('getPaymentRequirement', () => {
 });
 
 describe('requiresSchool', () => {
-  it("l'école est obligatoire seulement pour ALUMNI", () => {
+  it("l'école est obligatoire pour NEW_STUDENT et ALUMNI, pas pour OTHER", () => {
+    expect(requiresSchool(ParticipantType.NEW_STUDENT)).toBe(true);
     expect(requiresSchool(ParticipantType.ALUMNI)).toBe(true);
-    expect(requiresSchool(ParticipantType.NEW_STUDENT)).toBe(false);
     expect(requiresSchool(ParticipantType.OTHER)).toBe(false);
   });
 });

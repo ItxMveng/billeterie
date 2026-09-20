@@ -12,12 +12,24 @@ const base = {
 };
 
 describe('registrationSchema', () => {
-  it('accepte des données valides (NEW_STUDENT, sans école)', () => {
+  it('accepte des données valides (NEW_STUDENT avec son école)', () => {
+    const result = registrationSchema.safeParse({
+      ...base,
+      participant_type: ParticipantType.NEW_STUDENT,
+      school_id: SCHOOL_UUID,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('NEW_STUDENT sans école → refusé', () => {
     const result = registrationSchema.safeParse({
       ...base,
       participant_type: ParticipantType.NEW_STUDENT,
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path.includes('school_id'))).toBe(true);
+    }
   });
 
   it('normalise l\'email en minuscules', () => {

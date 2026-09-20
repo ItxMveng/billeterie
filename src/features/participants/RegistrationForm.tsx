@@ -33,7 +33,7 @@ const TYPE_OPTIONS = [
 ] as const;
 
 const TYPE_HINTS: Record<ParticipantType, string> = {
-  NEW_STUDENT: 'Participation gratuite, sous réserve de vérification.',
+  NEW_STUDENT: 'Participation gratuite, sous réserve de vérification. École requise.',
   ALUMNI: 'Participation payante. Ancienne école requise.',
   OTHER: 'Participation payante.',
 };
@@ -268,10 +268,10 @@ export function RegistrationForm() {
         </Field>
       </div>
 
-      {/* École conditionnelle (ALUMNI) */}
+      {/* École — obligatoire pour les nouveaux étudiants et les anciens */}
       {showSchool && (
         <Field
-          label="Ancienne école"
+          label={selectedType === ParticipantType.ALUMNI ? 'Ancienne école' : 'Votre école'}
           required
           error={errors.school_id?.message}
         >
@@ -284,7 +284,7 @@ export function RegistrationForm() {
               {...register('school_id')}
             >
               <option value="" disabled>
-                Sélectionnez votre ancienne école
+                {selectedType === ParticipantType.ALUMNI ? 'Sélectionnez votre ancienne école' : 'Sélectionnez votre école'}
               </option>
               {schools.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -293,25 +293,6 @@ export function RegistrationForm() {
                 </option>
               ))}
             </Select>
-          )}
-        </Field>
-      )}
-
-      {/* Numéro étudiant — facultatif, fiabilise la vérification automatique */}
-      {selectedType === ParticipantType.NEW_STUDENT && (
-        <Field
-          label="Numéro étudiant"
-          hint="Facultatif — permet de vérifier votre statut immédiatement."
-          error={errors.external_identifier?.message}
-        >
-          {({ id, describedBy }) => (
-            <Input
-              id={id}
-              aria-describedby={describedBy}
-              autoComplete="off"
-              invalid={Boolean(errors.external_identifier)}
-              {...register('external_identifier')}
-            />
           )}
         </Field>
       )}

@@ -75,8 +75,10 @@ OTHER                   → payment_required = true,  billet après paiement
 
 ## École conditionnelle
 
-`requiresSchool(type)` : école obligatoire **uniquement** pour `ALUMNI`.
-Renforcé par la contrainte SQL `alumni_requires_school` et le schéma Zod.
+`requiresSchool(type)` : école obligatoire pour **`NEW_STUDENT`** (l'école
+dans laquelle il étudie) et pour **`ALUMNI`** (son ancienne école).
+Facultative pour `OTHER`. Renforcé par la contrainte SQL
+`participant_requires_school` et par le schéma Zod.
 
 ## Détection des doublons
 

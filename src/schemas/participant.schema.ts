@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 import { ParticipantType } from '@/types/enums';
+import { requiresSchool } from '@/features/participants/participant.logic';
 
 // Téléphone : règle raisonnable et internationale (chiffres, +, espaces,
 // tirets, points, parenthèses ; 6 à 20 caractères une fois normalisé).
@@ -60,17 +61,20 @@ const baseParticipant = z.object({
 
 /**
  * Schéma complet de l'inscription publique.
- * `superRefine` applique la règle « école obligatoire pour ALUMNI ».
+ * `superRefine` applique la règle « école obligatoire » (NEW_STUDENT + ALUMNI).
  */
 export const registrationSchema = baseParticipant.superRefine((data, ctx) => {
-  if (data.participant_type === ParticipantType.ALUMNI) {
-    if (!data.school_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['school_id'],
-        message: "L'ancienne école est obligatoire pour un ancien étudiant.",
-      });
-    }
+  // École obligatoire pour les nouveaux étudiants (école actuelle) comme pour
+  // les anciens (ancienne école). Facultative pour les invités.
+  if (requiresSchool(data.participant_type) && !data.school_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['school_id'],
+      message:
+        data.participant_type === ParticipantType.ALUMNI
+          ? "L'ancienne école est obligatoire pour un ancien étudiant."
+          : "Merci d'indiquer l'école dans laquelle vous étudiez.",
+    });
   }
 });
 
