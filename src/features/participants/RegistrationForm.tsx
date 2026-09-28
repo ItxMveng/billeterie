@@ -102,24 +102,18 @@ export function RegistrationForm() {
           </h2>
         </div>
         <div className="mt-4 space-y-3 text-sm text-green-900">
-          {/* Vérification automatique réussie : billet déjà émis */}
-          {result.autoVerified && (
-            <Alert tone="success" title="Statut vérifié automatiquement">
-              Vous figurez sur la liste officielle des nouveaux étudiants. Votre
-              participation est <strong>gratuite</strong> et votre billet
-              {result.ticketNumber ? (
-                <> <strong className="font-mono">{result.ticketNumber}</strong> est</>
-              ) : (
-                <> est</>
-              )}{' '}
-              déjà disponible dans votre espace.
+          {/* Billet émis immédiatement */}
+          {result.ticketNumber && (
+            <Alert tone="success" title="Votre billet est prêt">
+              Billet <strong className="font-mono">{result.ticketNumber}</strong>{' '}
+              — il vous attend dans votre espace, avec son QR code à présenter à
+              l'entrée. Vous pouvez aussi le télécharger en PDF.
             </Alert>
           )}
-          {!result.autoVerified && result.verificationStatus === 'PENDING' && (
-            <Alert tone="info" title="Vérification en cours">
-              Nous n'avons pas pu confirmer automatiquement votre statut de
-              nouveau étudiant. Un membre de l'association va le vérifier
-              manuellement — vous n'avez rien à payer en attendant.
+          {!result.ticketNumber && !result.paymentRequired && (
+            <Alert tone="info" title="Billet en cours d'émission">
+              Votre inscription est enregistrée. Votre billet apparaîtra dans
+              votre espace d'ici quelques instants.
             </Alert>
           )}
 
@@ -133,8 +127,9 @@ export function RegistrationForm() {
             </p>
           ) : (
             <p>
-              Votre participation est gratuite. Suivez l'état de votre
-              inscription et retrouvez votre billet depuis votre espace.
+              Votre participation est <strong>gratuite</strong>. Aucune
+              validation n'est nécessaire : votre billet est déjà disponible
+              dans votre espace.
             </p>
           )}
           <Alert tone="warning">
@@ -168,13 +163,14 @@ export function RegistrationForm() {
   }
 
   const showSchool = selectedType && requiresSchool(selectedType);
-  const paymentRequired = selectedType
-    ? getPaymentRequirement({ participant_type: selectedType })
-    : false;
+  // Le tarif de l'événement fait foi : 0 => participation gratuite.
   const displayAmount =
     selectedType && event
       ? PaymentService.getDisplayAmountCents(selectedType, event)
       : 0;
+  const paymentRequired = selectedType
+    ? getPaymentRequirement({ participant_type: selectedType }, displayAmount)
+    : false;
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>

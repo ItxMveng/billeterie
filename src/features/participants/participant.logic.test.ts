@@ -17,21 +17,19 @@ import {
   TicketStatus,
 } from '@/types/enums';
 
-describe('getPaymentRequirement', () => {
-  it('NEW_STUDENT ne requiert pas de paiement', () => {
-    expect(
-      getPaymentRequirement({ participant_type: ParticipantType.NEW_STUDENT }),
-    ).toBe(false);
+describe('getPaymentRequirement (piloté par le tarif)', () => {
+  it('NEW_STUDENT est gratuit, quel que soit le tarif', () => {
+    expect(getPaymentRequirement({ participant_type: ParticipantType.NEW_STUDENT })).toBe(false);
+    expect(getPaymentRequirement({ participant_type: ParticipantType.NEW_STUDENT }, 2500)).toBe(false);
   });
-  it('ALUMNI requiert un paiement', () => {
-    expect(
-      getPaymentRequirement({ participant_type: ParticipantType.ALUMNI }),
-    ).toBe(true);
+  it('sans tarif configuré, tout le monde est gratuit', () => {
+    expect(getPaymentRequirement({ participant_type: ParticipantType.ALUMNI })).toBe(false);
+    expect(getPaymentRequirement({ participant_type: ParticipantType.OTHER })).toBe(false);
+    expect(getPaymentRequirement({ participant_type: ParticipantType.ALUMNI }, 0)).toBe(false);
   });
-  it('OTHER requiert un paiement', () => {
-    expect(
-      getPaymentRequirement({ participant_type: ParticipantType.OTHER }),
-    ).toBe(true);
+  it('un tarif strictement positif rend le paiement obligatoire', () => {
+    expect(getPaymentRequirement({ participant_type: ParticipantType.ALUMNI }, 2500)).toBe(true);
+    expect(getPaymentRequirement({ participant_type: ParticipantType.OTHER }, 1)).toBe(true);
   });
 });
 
@@ -87,65 +85,40 @@ describe('deriveInitialStatuses', () => {
       ticket_status: TicketStatus.NOT_GENERATED,
     });
   });
-  it('ALUMNI : vérification NOT_REQUIRED, paiement PENDING', () => {
-    expect(deriveInitialStatuses(ParticipantType.ALUMNI)).toEqual({
-      verification_status: VerificationStatus.NOT_REQUIRED,
-      payment_status: PaymentStatus.PENDING,
-      registration_status: RegistrationStatus.PENDING,
-      ticket_status: TicketStatus.NOT_GENERATED,
-    });
-  });
-  it('OTHER : vérification NOT_REQUIRED, paiement PENDING', () => {
-    expect(deriveInitialStatuses(ParticipantType.OTHER)).toEqual({
-      verification_status: VerificationStatus.NOT_REQUIRED,
-      payment_status: PaymentStatus.PENDING,
-      registration_status: RegistrationStatus.PENDING,
-      ticket_status: TicketStatus.NOT_GENERATED,
-    });
+  it('ALUMNI et OTHER : gratuits par défaut (aucun tarif configuré)', () => {
+    for (const type of [ParticipantType.ALUMNI, ParticipantType.OTHER]) {
+      expect(deriveInitialStatuses(type)).toEqual({
+        verification_status: VerificationStatus.NOT_REQUIRED,
+        payment_status: PaymentStatus.NOT_REQUIRED,
+        registration_status: RegistrationStatus.PENDING,
+        ticket_status: TicketStatus.NOT_GENERATED,
+      });
+    }
   });
 });
 
-describe('canIssueTicket', () => {
+describe('canIssueTicket (déprécié : exige CONFIRMED en plus)', () => {
   it('refuse si inscription non confirmée', () => {
     expect(
       canIssueTicket({
         participant_type: ParticipantType.ALUMNI,
-        payment_status: PaymentStatus.PAID,
         registration_status: RegistrationStatus.PENDING,
       }),
     ).toBe(false);
   });
-  it('NEW_STUDENT vérifié + confirmé → billet possible', () => {
+  it('confirmé et gratuit → billet', () => {
     expect(
       canIssueTicket({
-        participant_type: ParticipantType.NEW_STUDENT,
-        verification_status: VerificationStatus.VERIFIED,
+        participant_type: ParticipantType.ALUMNI,
         registration_status: RegistrationStatus.CONFIRMED,
       }),
     ).toBe(true);
   });
-  it('NEW_STUDENT non vérifié + confirmé → pas de billet', () => {
-    expect(
-      canIssueTicket({
-        participant_type: ParticipantType.NEW_STUDENT,
-        verification_status: VerificationStatus.PENDING,
-        registration_status: RegistrationStatus.CONFIRMED,
-      }),
-    ).toBe(false);
-  });
-  it('ALUMNI payé + confirmé → billet possible', () => {
+  it('confirmé mais paiement requis non encaissé → pas de billet', () => {
     expect(
       canIssueTicket({
         participant_type: ParticipantType.ALUMNI,
-        payment_status: PaymentStatus.PAID,
-        registration_status: RegistrationStatus.CONFIRMED,
-      }),
-    ).toBe(true);
-  });
-  it('ALUMNI non payé + confirmé → pas de billet', () => {
-    expect(
-      canIssueTicket({
-        participant_type: ParticipantType.ALUMNI,
+        payment_required: true,
         payment_status: PaymentStatus.PENDING,
         registration_status: RegistrationStatus.CONFIRMED,
       }),
@@ -154,11 +127,19 @@ describe('canIssueTicket', () => {
 });
 
 describe('resolvePaymentRequired (exemptions)', () => {
-  it("dérive de la catégorie sans exemption explicite", () => {
-    expect(resolvePaymentRequired({ participant_type: ParticipantType.ALUMNI })).toBe(true);
+  it('sans tarif ni valeur explicite, la participation est gratuite', () => {
+    expect(resolvePaymentRequired({ participant_type: ParticipantType.ALUMNI })).toBe(false);
     expect(resolvePaymentRequired({ participant_type: ParticipantType.NEW_STUDENT })).toBe(false);
   });
-  it("une exemption explicite prime sur la catégorie (dirigeant ALUMNI exempté)", () => {
+  it('une obligation explicite prime (tarif configuré côté serveur)', () => {
+    expect(
+      resolvePaymentRequired({
+        participant_type: ParticipantType.ALUMNI,
+        payment_required: true,
+      }),
+    ).toBe(true);
+  });
+  it('une exemption explicite prime (dirigeant exempté)', () => {
     expect(
       resolvePaymentRequired({
         participant_type: ParticipantType.ALUMNI,
@@ -166,26 +147,18 @@ describe('resolvePaymentRequired (exemptions)', () => {
       }),
     ).toBe(false);
   });
-  it("une obligation explicite prime aussi", () => {
-    expect(
-      resolvePaymentRequired({
-        participant_type: ParticipantType.NEW_STUDENT,
-        payment_required: true,
-      }),
-    ).toBe(true);
-  });
 });
 
-describe('canGenerateTicket (source de vérité S2)', () => {
-  it('NEW_STUDENT + PENDING → pas de ticket', () => {
+describe('canGenerateTicket (source de vérité)', () => {
+  it("une vérification PENDING ne bloque plus l'émission", () => {
     expect(
       canGenerateTicket({
         participant_type: ParticipantType.NEW_STUDENT,
         verification_status: VerificationStatus.PENDING,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
-  it('NEW_STUDENT + VERIFIED → ticket possible (gratuit)', () => {
+  it('NEW_STUDENT vérifié → billet', () => {
     expect(
       canGenerateTicket({
         participant_type: ParticipantType.NEW_STUDENT,
@@ -193,31 +166,43 @@ describe('canGenerateTicket (source de vérité S2)', () => {
       }),
     ).toBe(true);
   });
-  it('ALUMNI requis non payé → pas de ticket', () => {
+  it('une vérification REJETÉE bloque le billet', () => {
     expect(
       canGenerateTicket({
-        participant_type: ParticipantType.ALUMNI,
-        payment_status: PaymentStatus.AWAITING_CONFIRMATION,
+        participant_type: ParticipantType.NEW_STUDENT,
+        verification_status: VerificationStatus.REJECTED,
       }),
     ).toBe(false);
   });
-  it('ALUMNI payé → ticket possible', () => {
-    expect(
-      canGenerateTicket({
-        participant_type: ParticipantType.ALUMNI,
-        payment_status: PaymentStatus.PAID,
-      }),
-    ).toBe(true);
-  });
-  it('OTHER payé → ticket possible', () => {
+  it('inscription REJETÉE → jamais de billet', () => {
     expect(
       canGenerateTicket({
         participant_type: ParticipantType.OTHER,
+        registration_status: RegistrationStatus.REJECTED,
+      }),
+    ).toBe(false);
+  });
+  it('gratuit (aucun tarif) → billet immédiat', () => {
+    expect(canGenerateTicket({ participant_type: ParticipantType.OTHER })).toBe(true);
+    expect(canGenerateTicket({ participant_type: ParticipantType.ALUMNI })).toBe(true);
+  });
+  it('si un paiement est requis, il doit être encaissé', () => {
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.ALUMNI,
+        payment_required: true,
+        payment_status: PaymentStatus.AWAITING_CONFIRMATION,
+      }),
+    ).toBe(false);
+    expect(
+      canGenerateTicket({
+        participant_type: ParticipantType.ALUMNI,
+        payment_required: true,
         payment_status: PaymentStatus.PAID,
       }),
     ).toBe(true);
   });
-  it('participant exempté (payment_required=false) → ticket sans paiement', () => {
+  it('participant exempté → billet sans paiement', () => {
     expect(
       canGenerateTicket({
         participant_type: ParticipantType.OTHER,
@@ -225,23 +210,5 @@ describe('canGenerateTicket (source de vérité S2)', () => {
         payment_status: PaymentStatus.NOT_REQUIRED,
       }),
     ).toBe(true);
-  });
-  it('inscription REJETÉE → jamais de ticket', () => {
-    expect(
-      canGenerateTicket({
-        participant_type: ParticipantType.OTHER,
-        payment_required: false,
-        registration_status: RegistrationStatus.REJECTED,
-      }),
-    ).toBe(false);
-  });
-  it('ne se contente pas de registration=CONFIRMED (alumni confirmé mais non payé)', () => {
-    expect(
-      canGenerateTicket({
-        participant_type: ParticipantType.ALUMNI,
-        payment_status: PaymentStatus.PENDING,
-        registration_status: RegistrationStatus.CONFIRMED,
-      }),
-    ).toBe(false);
   });
 });

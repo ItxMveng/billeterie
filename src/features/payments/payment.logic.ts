@@ -10,7 +10,6 @@
  */
 
 import { PaymentStatus } from '@/types/enums';
-import { getPaymentRequirement } from '@/features/participants/participant.logic';
 import type { ParticipantType } from '@/types/enums';
 import type { ResolvedEvent } from '@/features/events/EventService';
 
@@ -69,6 +68,7 @@ export function getDisplayAmountCents(
   type: ParticipantType,
   event: Pick<ResolvedEvent, 'alumniPriceCents' | 'otherPriceCents'>,
 ): number {
-  if (!getPaymentRequirement({ participant_type: type })) return 0;
+  // Les nouveaux étudiants sont gratuits par construction.
+  if (type === 'NEW_STUDENT') return 0;
   return type === 'ALUMNI' ? event.alumniPriceCents : event.otherPriceCents;
 }

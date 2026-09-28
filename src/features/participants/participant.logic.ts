@@ -35,27 +35,24 @@ export interface ParticipantLike {
 }
 
 /**
- * Le paiement est-il requis pour cette catégorie ?
+ * Le paiement est-il requis ?
  *
- * - NEW_STUDENT : participation gratuite → false.
- * - ALUMNI      : payant → true.
- * - OTHER       : payant → true.
+ * La décision repose sur le TARIF configuré pour l'événement, pas sur la
+ * catégorie : un tarif à 0 signifie participation gratuite. Les tarifs étant
+ * actuellement à 0, tout le monde participe gratuitement — et il suffit de
+ * saisir un tarif dans « Événement » pour réactiver le paiement, sans
+ * déploiement de code.
  *
- * Décision fondée sur la CATÉGORIE (propriété structurelle), pas sur une
- * donnée manipulable côté client. La vérification d'un nouveau conditionne
- * l'émission du BILLET, pas le fait de payer (voir canIssueTicket).
+ * Les nouveaux étudiants sont gratuits par construction (aucun tarif ne leur
+ * est applicable). Le montant n'est jamais fiable côté client : il est
+ * recalculé côté serveur à la création du paiement.
  */
-export function getPaymentRequirement(participant: ParticipantLike): boolean {
-  switch (participant.participant_type) {
-    case ParticipantType.NEW_STUDENT:
-      return false;
-    case ParticipantType.ALUMNI:
-    case ParticipantType.OTHER:
-      return true;
-    default:
-      // Défaut sûr : en cas de type inattendu, on exige le paiement.
-      return true;
-  }
+export function getPaymentRequirement(
+  participant: ParticipantLike,
+  amountCents = 0,
+): boolean {
+  if (participant.participant_type === ParticipantType.NEW_STUDENT) return false;
+  return amountCents > 0;
 }
 
 /**
@@ -135,25 +132,24 @@ export function deriveInitialStatuses(type: ParticipantType): {
 }
 
 /**
- * Conditions métier d'ÉLIGIBILITÉ à la génération d'un billet (Sprint 2).
+ * Conditions métier d'ÉLIGIBILITÉ à la génération d'un billet.
  *
- * SOURCE DE VÉRITÉ UNIQUE de l'éligibilité (réutilisée par l'UI et reflétée
- * côté serveur dans la fonction SQL `generate_ticket`). Ne se contente JAMAIS
- * de `registration_status = CONFIRMED` (cf. exigence Sprint 2 §28) :
+ * SOURCE DE VÉRITÉ UNIQUE, reflétée côté serveur par la fonction SQL
+ * `can_generate_ticket`. Le billet étant désormais émis dès l'inscription,
+ * ces conditions sont volontairement minimales :
  *
  * - l'inscription ne doit pas être REJETÉE ;
- * - NEW_STUDENT : vérification VERIFIED obligatoire ;
- * - si paiement requis (exemptions comprises) : paiement PAID obligatoire.
- *
- * Un participant exempté (`payment_required = false`) et une inscription non
- * rejetée peut recevoir son billet sans paiement.
+ * - la vérification ne doit pas être explicitement REJETÉE — un statut
+ *   PENDING ne bloque plus (la participation est gratuite, faire attendre une
+ *   validation humaine n'apporte plus de garantie) ;
+ * - si un paiement est réellement requis, il doit être encaissé (PAID).
  */
 export function canGenerateTicket(participant: ParticipantLike): boolean {
   if (participant.registration_status === RegistrationStatus.REJECTED) {
     return false;
   }
-  if (participant.participant_type === ParticipantType.NEW_STUDENT) {
-    if (!isVerifiedNewStudent(participant)) return false;
+  if (participant.verification_status === VerificationStatus.REJECTED) {
+    return false;
   }
   if (resolvePaymentRequired(participant)) {
     return participant.payment_status === PaymentStatus.PAID;

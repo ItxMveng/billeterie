@@ -71,6 +71,11 @@ const FAQ = [
 
 /* -------------------------------------------------------------------------- */
 
+/** Libellé de tarif : « Gratuit » quand aucun montant n'est demandé. */
+function priceLabel(cents: number, currency: string): string {
+  return cents > 0 ? formatMoney(cents, currency) : 'Gratuit';
+}
+
 export function LandingPage() {
   const [event, setEvent] = useState<ResolvedEvent | null>(null);
 
@@ -92,8 +97,8 @@ export function LandingPage() {
       icon: Users,
       label: 'Anciens étudiants',
       text: 'Retrouve tes anciens camarades et reste connecté à la communauté.',
-      badge: event ? formatMoney(event.alumniPriceCents, event.currency) : 'Payant',
-      badgeClass: 'bg-brand-100 text-brand-800',
+      badge: event ? priceLabel(event.alumniPriceCents, event.currency) : 'Gratuit',
+      badgeClass: event && event.alumniPriceCents > 0 ? 'bg-brand-100 text-brand-800' : 'bg-emerald-100 text-emerald-800',
       iconClass: 'bg-brand-100 text-brand-600',
       featured: false,
     },
@@ -101,8 +106,8 @@ export function LandingPage() {
       icon: UserRound,
       label: 'Autres / Invités',
       text: 'Partenaires, familles, amis… vous êtes les bienvenus !',
-      badge: event ? formatMoney(event.otherPriceCents, event.currency) : 'Payant',
-      badgeClass: 'bg-navy-100 text-navy-800',
+      badge: event ? priceLabel(event.otherPriceCents, event.currency) : 'Gratuit',
+      badgeClass: event && event.otherPriceCents > 0 ? 'bg-navy-100 text-navy-800' : 'bg-emerald-100 text-emerald-800',
       iconClass: 'bg-navy-100 text-navy-600',
       featured: false,
     },
@@ -320,7 +325,7 @@ export function LandingPage() {
             </ul>
 
             <p className="mt-5 text-xs text-navy-500">
-              Montants indicatifs — le montant exact est confirmé au moment du paiement.
+              La participation est gratuite pour toutes les catégories.
             </p>
           </div>
         </div>
