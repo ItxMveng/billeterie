@@ -33,9 +33,9 @@ const TYPE_OPTIONS = [
 ] as const;
 
 const TYPE_HINTS: Record<ParticipantType, string> = {
-  NEW_STUDENT: 'Participation gratuite, sous réserve de vérification. École requise.',
-  ALUMNI: 'Participation payante. Ancienne école requise.',
-  OTHER: 'Participation payante.',
+  NEW_STUDENT: 'Participation gratuite. Indiquez votre école.',
+  ALUMNI: 'Participation gratuite. Indiquez votre ancienne école.',
+  OTHER: 'Participation gratuite. Ouvert aux invités et sympathisants.',
 };
 
 export function RegistrationForm() {
@@ -310,8 +310,8 @@ export function RegistrationForm() {
             </span>
           ) : (
             <span>
-              Participation gratuite pour les nouveaux étudiants, sous réserve de
-              vérification de votre statut.
+              Participation <strong>gratuite</strong> — votre billet est émis
+              dès la validation du formulaire.
             </span>
           )}
         </Alert>

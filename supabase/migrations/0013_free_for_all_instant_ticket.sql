@@ -200,11 +200,15 @@ set status = 'REJECTED',
     metadata = metadata || jsonb_build_object('annule_gratuite', true)
 where status in ('PENDING', 'AWAITING_CONFIRMATION');
 
+-- Les littéraux d'un CASE sont du texte : il faut les convertir explicitement
+-- vers le type enum de la colonne (sinon erreur 42804).
 update public.participants
 set payment_required = false,
-    payment_status = 'NOT_REQUIRED',
-    registration_status = case when registration_status = 'REJECTED'
-                               then 'REJECTED' else 'CONFIRMED' end
+    payment_status = 'NOT_REQUIRED'::payment_status,
+    registration_status = case
+      when registration_status = 'REJECTED' then 'REJECTED'::registration_status
+      else 'CONFIRMED'::registration_status
+    end
 where coalesce(payment_required, true) = true
   and payment_status <> 'PAID';
 
