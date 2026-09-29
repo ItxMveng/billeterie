@@ -47,7 +47,7 @@ export const PaymentService = {
     const { data, error } = await supabase
       .from('payments')
       .select(
-        '*, participant:participants(first_name,last_name,email,participant_type)',
+        '*, participant:participants(first_name,last_name,email,phone,participant_type,school_id)',
       )
       .in('status', [PaymentStatus.PENDING, PaymentStatus.AWAITING_CONFIRMATION])
       .order('created_at', { ascending: true });
@@ -64,7 +64,7 @@ export const PaymentService = {
     const supabase = requireSupabase();
     const { data, error } = await supabase
       .from('payments')
-      .select('*, participant:participants(first_name,last_name,email,participant_type)')
+      .select('*, participant:participants(first_name,last_name,email,phone,participant_type,school_id)')
       .order('created_at', { ascending: false });
     if (error) {
       const appError = toAppError(error);

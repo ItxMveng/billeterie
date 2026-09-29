@@ -139,7 +139,7 @@ export interface CheckinRow {
 export interface PaymentWithParticipant extends PaymentRow {
   participant: Pick<
     ParticipantRow,
-    'first_name' | 'last_name' | 'email' | 'participant_type'
+    'first_name' | 'last_name' | 'email' | 'phone' | 'participant_type' | 'school_id'
   > | null;
 }
 

@@ -115,3 +115,38 @@ export async function buildTicketPdfBlob(
 
   return doc.output('blob');
 }
+
+/** URL de check-in encodée dans le QR du billet. */
+export function buildCheckinUrl(token: string): string {
+  return `${window.location.origin}/checkin?t=${encodeURIComponent(token)}`;
+}
+
+/**
+ * Génère le QR à partir du jeton puis télécharge le PDF.
+ * Utilisé côté participant comme côté administration.
+ */
+export async function downloadTicketPdfFor(
+  ticket: TicketView,
+  token: string,
+): Promise<void> {
+  const QRCode = (await import('qrcode')).default;
+  const qr = await QRCode.toDataURL(buildCheckinUrl(token), {
+    width: 640,
+    margin: 1,
+    errorCorrectionLevel: 'M',
+  });
+  const blob = await buildTicketPdfBlob(ticket, qr);
+
+  // Téléchargement via une ancre temporaire, puis libération de l'URL objet.
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = ticketPdfFileName(ticket);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

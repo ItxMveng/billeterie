@@ -10,6 +10,7 @@ import { requireSupabase } from '@/lib/supabase';
 import { toAppError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import type { ParticipantType } from '@/types/enums';
+import type { TicketRow } from '@/types/database';
 
 export interface TicketView {
   ticket_number: string;
@@ -37,11 +38,46 @@ async function rpc<T = unknown>(
   return data as T;
 }
 
+/** Billet + lien d'accès fraîchement régénéré (remis une seule fois). */
+export interface TicketLink extends TicketView {
+  access_token: string;
+  email: string;
+}
+
 export const TicketService = {
   /** Récupère le ticket du participant via son token privé (ou null). */
   async getByToken(token: string): Promise<TicketView | null> {
     const data = await rpc<TicketView | null>('get_ticket_by_token', { p_token: token }, 'TicketService.getByToken');
     return data ?? null;
+  },
+
+  /**
+   * Régénère le lien d'accès d'un participant et renvoie son billet.
+   * Émet le billet s'il n'existe pas encore. Réservé aux administrateurs.
+   *
+   * ⚠️ L'ancien lien cesse de fonctionner : un seul lien valide à la fois.
+   */
+  async issueLink(participantId: string): Promise<TicketLink> {
+    return rpc<TicketLink>(
+      'admin_issue_ticket_link',
+      { p_participant_id: participantId },
+      'TicketService.issueLink',
+    );
+  },
+
+  /** Tous les billets émis (staff — pour les exports et le suivi). */
+  async listAll(): Promise<TicketRow[]> {
+    const supabase = requireSupabase();
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .order('issued_at', { ascending: true });
+    if (error) {
+      const appError = toAppError(error);
+      logger.reportError(appError, { scope: 'TicketService.listAll' });
+      throw appError;
+    }
+    return (data ?? []) as TicketRow[];
   },
 
   /** Génère (ou renvoie) le ticket d'un participant éligible. Admin, idempotent. */

@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Pencil, Save, X, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft, Pencil, Save, X, Trash2, LinkIcon, Download, Mail, Copy, Ticket,
+} from 'lucide-react';
 import { useAsync } from '@/hooks/useAsync';
 import { useAuth } from '@/features/auth/useAuth';
 import { ParticipantService } from '@/features/participants/ParticipantService';
 import { VerificationService } from '@/features/verification/VerificationService';
 import { PaymentService } from '@/features/payments/PaymentService';
-import { TicketService } from '@/features/tickets/TicketService';
+import { TicketService, type TicketLink } from '@/features/tickets/TicketService';
+import { downloadTicketPdfFor } from '@/features/tickets/ticket-pdf';
 import { canGenerateTicket } from '@/features/participants/participant.logic';
 import { AppError } from '@/lib/errors';
 import { formatMoney, formatDate } from '@/lib/utils';
@@ -41,6 +44,9 @@ export function ParticipantDetailPage() {
   const navigate = useNavigate();
   const schools = useAsync(() => SchoolService.listAll(), []);
   const [busy, setBusy] = useState(false);
+  const [ticketLink, setTicketLink] = useState<TicketLink | null>(null);
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", school_id: "", external_identifier: "" });
 
@@ -280,6 +286,124 @@ export function ParticipantDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Billet & lien d'accès — dépannage en cas de lien perdu */}
+            {can('tickets:write') && (
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Billet &amp; lien d'accès</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-600">
+                    À utiliser lorsqu'un participant a perdu son lien privé
+                    (changement de navigateur, session effacée). Le billet est
+                    émis s'il n'existe pas encore.
+                  </p>
+
+                  <Alert tone="warning">
+                    Générer un nouveau lien <strong>invalide l'ancien</strong> :
+                    un seul lien reste valable à la fois. L'opération est
+                    enregistrée dans le journal d'audit.
+                  </Alert>
+
+                  <Button
+                    loading={linkBusy}
+                    onClick={async () => {
+                      setLinkBusy(true);
+                      try {
+                        const link = await TicketService.issueLink(id);
+                        setTicketLink(link);
+                        toast.success(
+                          `Billet ${link.ticket_number} — lien prêt à transmettre.`,
+                          'Nouveau lien généré',
+                        );
+                        reload();
+                      } catch (e) {
+                        toast.error(
+                          e instanceof AppError ? e.userMessage : 'Génération impossible.',
+                        );
+                      } finally {
+                        setLinkBusy(false);
+                      }
+                    }}
+                  >
+                    <LinkIcon className="h-4 w-4" aria-hidden="true" />
+                    {data.ticket ? 'Régénérer le lien d\u2019accès' : 'Émettre le billet et le lien'}
+                  </Button>
+
+                  {ticketLink && (
+                    <div className="space-y-3 rounded-xl border border-green-200 bg-green-50 p-4">
+                      <p className="text-sm font-medium text-green-900">
+                        Billet{' '}
+                        <span className="font-mono">{ticketLink.ticket_number}</span>{' '}
+                        — lien affiché une seule fois, copiez-le maintenant.
+                      </p>
+
+                      <div className="break-all rounded bg-white p-2 font-mono text-xs text-slate-700">
+                        {window.location.origin}/mon-billet?t={ticketLink.access_token}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            const url = `${window.location.origin}/mon-billet?t=${ticketLink.access_token}`;
+                            try {
+                              await navigator.clipboard.writeText(url);
+                              toast.success('Lien copié dans le presse-papiers.');
+                            } catch {
+                              toast.error('Copie impossible — sélectionnez le lien à la main.');
+                            }
+                          }}
+                        >
+                          <Copy className="h-4 w-4" aria-hidden="true" /> Copier le lien
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          loading={pdfBusy}
+                          onClick={async () => {
+                            setPdfBusy(true);
+                            try {
+                              await downloadTicketPdfFor(ticketLink, ticketLink.access_token);
+                              toast.success('PDF téléchargé — vous pouvez le joindre à un email.');
+                            } catch {
+                              toast.error('Téléchargement impossible.');
+                            } finally {
+                              setPdfBusy(false);
+                            }
+                          }}
+                        >
+                          <Download className="h-4 w-4" aria-hidden="true" /> Télécharger le PDF
+                        </Button>
+
+                        <a
+                          href={buildMailto(ticketLink)}
+                          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          <Mail className="h-4 w-4" aria-hidden="true" /> Envoyer par email
+                        </a>
+                      </div>
+
+                      <p className="text-xs text-green-800">
+                        « Envoyer par email » ouvre votre messagerie avec le
+                        message pré-rempli. Pensez à joindre le PDF téléchargé.
+                      </p>
+                    </div>
+                  )}
+
+                  {!ticketLink && data.ticket && (
+                    <p className="flex items-center gap-2 text-sm text-slate-500">
+                      <Ticket className="h-4 w-4" aria-hidden="true" />
+                      Billet actuel :{' '}
+                      <span className="font-mono">{data.ticket.ticket_number}</span>
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Paiements (finance/admin/viewer) */}
             {can('payments:read') && (
               <Card className="lg:col-span-2">
@@ -363,4 +487,30 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-right font-medium text-slate-900">{value}</span>
     </div>
   );
+}
+
+/** Message pré-rempli pour transmettre le billet par email. */
+function buildMailto(link: TicketLink): string {
+  const url = `${window.location.origin}/mon-billet?t=${link.access_token}`;
+  const sujet = `Votre billet ${link.ticket_number} — ${link.event_name ?? 'Cérémonie d\u2019accueil'}`;
+  const corps = [
+    `Bonjour ${link.first_name},`,
+    '',
+    'Voici votre billet pour la cérémonie.',
+    '',
+    `Numéro de billet : ${link.ticket_number}`,
+    link.event_date ? `Date : ${link.event_date}` : '',
+    link.event_location ? `Lieu : ${link.event_location}` : '',
+    '',
+    'Accédez à votre billet et à son QR code ici :',
+    url,
+    '',
+    'Conservez ce lien : il est personnel et constitue votre seul accès au billet.',
+    '',
+    "L'équipe de l'association",
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return `mailto:${encodeURIComponent(link.email)}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
 }

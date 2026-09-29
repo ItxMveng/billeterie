@@ -21,6 +21,7 @@ const ACTION_LABELS: Record<string, string> = {
   GENERATE_TICKET: 'Génération ticket',
   CANCEL_TICKET: 'Annulation ticket',
   CHECK_IN: 'Contrôle entrée',
+  RESET_ACCESS_TOKEN: "Nouveau lien d'accès",
   GRANT_ROLE: 'Attribution de rôle',
   REVOKE_ROLE: 'Retrait de rôle',
 };
