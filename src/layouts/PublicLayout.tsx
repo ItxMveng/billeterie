@@ -8,7 +8,6 @@ import { BrandLogo } from '@/components/ui/BrandLogo';
 const SECTIONS = [
   { href: '/#a-propos', label: 'À propos' },
   { href: '/#programme', label: 'Programme' },
-  { href: '/#activites', label: 'Activités' },
   { href: '/#categories', label: 'Catégories' },
   { href: '/#faq', label: 'FAQ' },
 ];

@@ -14,12 +14,6 @@ import {
   QrCode,
   ShieldCheck,
   ChevronDown,
-  Trophy,
-  Armchair,
-  Shirt,
-  Lightbulb,
-  Puzzle,
-  Flame,
 } from 'lucide-react';
 import { EventService, type ResolvedEvent } from '@/features/events/EventService';
 import { associationConfig } from '@/config/event.config';
@@ -39,10 +33,17 @@ const PILIERS = [
 ] as const;
 
 const PROGRAMME = [
+  { time: 'En journée', title: 'Football', text: 'Tournoi en extérieur, équipes ouvertes à tous.' },
   { time: '19h00', title: 'Accueil des participants', text: 'Émargement et remise des badges.' },
   { time: '19h30', title: "Mot de l'association", text: "Présentation du CPBA et des activités de l'année." },
   { time: '20h00', title: 'Parrainage', text: 'Chaque nouvel arrivant est mis en relation avec un parrain ou une marraine.' },
-  { time: '21h00', title: 'Moment convivial', text: 'Rencontres entre promotions autour d\'un buffet.' },
+  { time: '21h00', title: 'Moment convivial', text: "Rencontres entre promotions autour d'un buffet." },
+  { time: 'À confirmer', title: 'Jeux de la chaise musicale', text: 'Le grand classique, version XXL.' },
+  { time: 'À confirmer', title: 'Quiz sur la France', text: 'Culture, repères et anecdotes.' },
+  { time: 'À confirmer', title: 'Escape game', text: 'En équipe et contre la montre.' },
+  { time: 'À confirmer', title: 'Défilé de mode', text: 'Venez montrer votre style.' },
+  { time: 'À confirmer', title: 'Compétition de danse', text: 'Battle ouverte à tous les niveaux.' },
+  { time: 'À confirmer', title: 'Danse — piste libre', text: 'La piste est à vous jusqu’au bout de la soirée.' },
 ];
 
 const RAISONS = [
@@ -52,15 +53,7 @@ const RAISONS = [
   { icon: Users, title: "T'engager", text: 'Participe à la vie de ta communauté.' },
 ];
 
-const ACTIVITES = [
-  { icon: Trophy, title: 'Football', text: 'Tournoi en journée, équipes ouvertes à tous.' },
-  { icon: Armchair, title: 'Chaise musicale', text: 'Le grand classique, version XXL.' },
-  { icon: Shirt, title: 'Défilé de mode', text: 'Venez montrer votre style.' },
-  { icon: Lightbulb, title: 'Quiz sur la France', text: 'Culture, repères et anecdotes.' },
-  { icon: Puzzle, title: 'Escape game', text: 'En équipe et contre la montre.' },
-  { icon: Flame, title: 'Battle de danse', text: 'Compétition ouverte à tous les niveaux.' },
-  { icon: Music, title: 'Piste libre', text: 'La piste est à vous jusqu’au bout de la soirée.' },
-];
+
 
 const FAQ = [
   {
@@ -344,40 +337,6 @@ export function LandingPage() {
               La participation est gratuite pour toutes les catégories.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════ ACTIVITÉS ═══════════════════════ */}
-      <section id="activites" className="scroll-mt-20 bg-cream py-20 lg:py-24">
-        <div className="container">
-          <div className="mx-auto max-w-2xl text-center">
-            <Eyebrow center>Au programme</Eyebrow>
-            <h2 className="mt-4 font-display text-3xl font-bold text-navy-900 sm:text-4xl">
-              Les activités de la journée
-            </h2>
-            <p className="mt-3 text-navy-600">
-              De quoi jouer, danser et se découvrir — quel que soit votre niveau.
-            </p>
-          </div>
-
-          <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {ACTIVITES.map(({ icon: Icon, title, text }) => (
-              <li
-                key={title}
-                className="group flex items-start gap-4 rounded-3xl border border-navy-100 bg-white p-6 shadow-soft transition-transform duration-200 motion-safe:hover:-translate-y-1"
-              >
-                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-                  <Icon className="h-6 w-6" aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="font-display text-lg font-semibold text-navy-900">
-                    {title}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-navy-600">{text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
