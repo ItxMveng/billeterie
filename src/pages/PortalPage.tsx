@@ -185,7 +185,7 @@ export function PortalPage() {
       {situation === 'VERIFICATION_REJECTED' && (
         <Alert tone="error" title="Statut non confirmé">
           <p>
-            Votre statut de nouveau étudiant n'a pas pu être confirmé. Si vous
+            Votre statut d'étudiant n'a pas pu être confirmé. Si vous
             êtes bien nouvel étudiant, contactez l'association. Vous pouvez
             également participer en tant qu'invité.
           </p>
@@ -273,7 +273,7 @@ export function PortalPage() {
           {/* Explication de l'attente, uniquement si l'on attend vraiment */}
           {situation === 'AWAITING_VERIFICATION' && (
             <Alert tone="info">
-              Votre statut de nouveau étudiant est en cours de vérification.
+              Votre statut d'étudiant est en cours de vérification.
               Votre billet sera émis automatiquement dès validation — vous
               n'avez rien à payer.
             </Alert>

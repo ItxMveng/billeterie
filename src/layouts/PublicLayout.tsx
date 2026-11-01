@@ -34,7 +34,7 @@ function Logo({ light }: { light?: boolean }) {
             light ? 'text-navy-200' : 'text-navy-500',
           )}
         >
-          Cérémonie d'accueil
+          Remise des diplômes
         </span>
       </span>
     </Link>

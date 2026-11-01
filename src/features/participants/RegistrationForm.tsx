@@ -26,16 +26,17 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 
+// Les diplômés de la promotion s'inscrivent en ALUMNI : proposés en premier.
 const TYPE_OPTIONS = [
-  ParticipantType.NEW_STUDENT,
   ParticipantType.ALUMNI,
+  ParticipantType.NEW_STUDENT,
   ParticipantType.OTHER,
 ] as const;
 
 const TYPE_HINTS: Record<ParticipantType, string> = {
   NEW_STUDENT: 'Participation gratuite. Indiquez votre école.',
-  ALUMNI: 'Participation gratuite. Indiquez votre ancienne école.',
-  OTHER: 'Participation gratuite. Ouvert aux invités et sympathisants.',
+  ALUMNI: "Participation gratuite. Indiquez l'école dont vous êtes diplômé(e).",
+  OTHER: 'Participation gratuite. Familles, amis et invités.',
 };
 
 export function RegistrationForm() {

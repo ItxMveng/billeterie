@@ -41,10 +41,11 @@ function str(key: string, fallback: string): string {
 
 // Valeurs de repli explicitement marquées « à confirmer » : aucune donnée
 // métier définitive n'est inventée ici.
-const FALLBACK_NAME = "Cérémonie d'accueil";
-const FALLBACK_LOCATION = '31 rue de Vendée, 29200 Brest';
-const FALLBACK_DATE = '2026-10-03';
-const FALLBACK_START = '19:00';
+const FALLBACK_NAME = 'Remise des diplômes — Promotion 2025-2026';
+// Heure et lieu restent à confirmer : chaînes vides => « à confirmer » à l'écran.
+const FALLBACK_LOCATION = '';
+const FALLBACK_DATE = '2026-11-28';
+const FALLBACK_START = '';
 
 const name = str('VITE_EVENT_NAME', FALLBACK_NAME);
 const location = str('VITE_EVENT_LOCATION', FALLBACK_LOCATION);
@@ -58,8 +59,9 @@ export const eventConfig: EventConfig = {
   startTime: str('VITE_EVENT_START_TIME', FALLBACK_START),
   location,
   currency: str('VITE_CURRENCY', 'EUR'),
-  alumniPriceCents: num('VITE_ALUMNI_PRICE_CENTS', 2500),
-  otherPriceCents: num('VITE_OTHER_PRICE_CENTS', 2500),
+  // Participation gratuite pour tous : aucun tarif par défaut.
+  alumniPriceCents: num('VITE_ALUMNI_PRICE_CENTS', 0),
+  otherPriceCents: num('VITE_OTHER_PRICE_CENTS', 0),
 };
 
 /**

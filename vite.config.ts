@@ -12,10 +12,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
-        name: 'Cérémonie d\'accueil — Billetterie',
+        name: 'Remise des diplômes — Billetterie CPBA',
         short_name: 'Billetterie',
         description:
-          'Inscription et billetterie de la cérémonie d\'accueil des étudiants camerounais.',
+          'Inscription et billetterie de la remise des diplômes de la promotion 2025-2026 du CPBA.',
         theme_color: '#0f766e',
         background_color: '#ffffff',
         display: 'standalone',

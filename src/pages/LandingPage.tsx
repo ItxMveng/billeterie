@@ -6,11 +6,11 @@ import {
   ArrowRight,
   Users,
   Sparkles,
-  Music,
+  Camera,
   HeartHandshake,
   GraduationCap,
   UserRound,
-  Rocket,
+  Award,
   QrCode,
   ShieldCheck,
   ChevronDown,
@@ -25,32 +25,31 @@ import { BrandLogo } from '@/components/ui/BrandLogo';
 /* Contenu — modifiable sans toucher à la mise en page                        */
 /* -------------------------------------------------------------------------- */
 
+/** Promotion mise à l'honneur (année universitaire écoulée). */
+const PROMOTION = '2025-2026';
+
 const PILIERS = [
-  { icon: Users, color: 'navy', title: 'Rencontres', text: 'Fais connaissance avec ta promo et ton école.' },
-  { icon: Sparkles, color: 'brand', title: 'Découvertes', text: 'Explore les assos, les services et les opportunités.' },
-  { icon: Music, color: 'navy', title: 'Animations', text: 'Une ambiance conviviale et festive toute la soirée.' },
-  { icon: HeartHandshake, color: 'brand', title: "Esprit d'équipe", text: 'Ensemble, on va plus loin.' },
+  { icon: GraduationCap, color: 'navy', title: 'Célébrer', text: 'Mettre à l’honneur la réussite de chaque diplômé.' },
+  { icon: HeartHandshake, color: 'brand', title: 'Rassembler', text: 'Diplômés, familles et amis réunis pour l’occasion.' },
+  { icon: Sparkles, color: 'navy', title: 'Inspirer', text: 'Montrer aux plus jeunes où mène le parcours.' },
+  { icon: Users, color: 'brand', title: 'Rester connectés', text: 'Le diplôme en poche, la communauté reste là.' },
 ] as const;
 
+// Déroulé indicatif : les horaires précis seront communiqués prochainement.
 const PROGRAMME = [
-  { time: 'En journée', title: 'Football', text: 'Tournoi en extérieur, équipes ouvertes à tous.' },
-  { time: '19h00', title: 'Accueil des participants', text: 'Émargement et remise des badges.' },
-  { time: '19h30', title: "Mot de l'association", text: "Présentation du CPBA et des activités de l'année." },
-  { time: '20h00', title: 'Parrainage', text: 'Chaque nouvel arrivant est mis en relation avec un parrain ou une marraine.' },
-  { time: '21h00', title: 'Moment convivial', text: "Rencontres entre promotions autour d'un buffet." },
-  { time: 'À confirmer', title: 'Jeux de la chaise musicale', text: 'Le grand classique, version XXL.' },
-  { time: 'À confirmer', title: 'Quiz sur la France', text: 'Culture, repères et anecdotes.' },
-  { time: 'À confirmer', title: 'Escape game', text: 'En équipe et contre la montre.' },
-  { time: 'À confirmer', title: 'Défilé de mode', text: 'Venez montrer votre style.' },
-  { time: 'À confirmer', title: 'Compétition de danse', text: 'Battle ouverte à tous les niveaux.' },
-  { time: 'À confirmer', title: 'Danse — piste libre', text: 'La piste est à vous jusqu’au bout de la soirée.' },
+  { time: 'À confirmer', title: 'Accueil des invités', text: 'Émargement et installation des diplômés et de leurs proches.' },
+  { time: 'À confirmer', title: "Mot d'ouverture", text: 'Discours du bureau du CPBA.' },
+  { time: 'À confirmer', title: 'Témoignages', text: 'Des diplômés racontent leur parcours, de l’arrivée au diplôme.' },
+  { time: 'À confirmer', title: 'Remise des diplômes', text: 'Appel des diplômés, école par école, et passage sur scène.' },
+  { time: 'À confirmer', title: 'Photo de promotion', text: 'Photo officielle de la promo, puis photos avec les proches.' },
+  { time: 'À confirmer', title: 'Cocktail & moment convivial', text: "Échanges entre promotions autour d'un buffet, en musique." },
 ];
 
 const RAISONS = [
-  { icon: HeartHandshake, title: 'Créer des liens', text: 'Rencontre des personnes qui partagent ton parcours.' },
-  { icon: Sparkles, title: 'Découvrir', text: 'Explore ton environnement et les opportunités.' },
-  { icon: Rocket, title: "T'amuser", text: 'Profite d\'une soirée festive et conviviale.' },
-  { icon: Users, title: "T'engager", text: 'Participe à la vie de ta communauté.' },
+  { icon: Award, title: 'Célébrer ta réussite', text: 'Des années d’efforts méritent une vraie soirée.' },
+  { icon: HeartHandshake, title: 'Partager avec tes proches', text: 'Famille et amis sont invités à fêter ça avec toi.' },
+  { icon: Sparkles, title: 'Inspirer la relève', text: 'Ton parcours motive ceux qui arrivent.' },
+  { icon: Camera, title: 'Garder un souvenir', text: 'Photo de promo et moments à immortaliser.' },
 ];
 
 
@@ -58,11 +57,15 @@ const RAISONS = [
 const FAQ = [
   {
     q: 'Qui peut participer à la cérémonie ?',
-    a: "Les nouveaux étudiants, les anciens étudiants et les invités. Chaque catégorie a ses propres modalités d'inscription.",
+    a: `Les diplômés de la promotion ${PROMOTION}, les étudiants et anciens de la communauté, ainsi que les familles et invités.`,
   },
   {
     q: "L'inscription est-elle payante ?",
-    a: "Non. La participation est entièrement gratuite pour tout le monde : nouveaux étudiants, anciens étudiants et invités.",
+    a: 'Non. La participation est entièrement gratuite pour tout le monde : diplômés, étudiants et invités.',
+  },
+  {
+    q: 'Je suis diplômé(e), dois-je aussi inscrire mes proches ?',
+    a: 'Oui : chaque personne présente a besoin de son propre billet. Vos proches s’inscrivent dans la catégorie « Familles & invités ».',
   },
   {
     q: 'Comment obtiendrai-je mon billet ?',
@@ -92,29 +95,30 @@ export function LandingPage() {
     void EventService.getActiveEvent().then(setEvent);
   }, []);
 
+  // Les diplômés s'inscrivent dans la catégorie ALUMNI (tarif alumni).
   const categories = [
     {
       icon: GraduationCap,
-      label: 'Nouveaux étudiants',
-      text: "Découvre ton école, obtiens tes infos et rencontre ta promo.",
-      badge: 'Inscription gratuite',
-      badgeClass: 'bg-emerald-100 text-emerald-800',
-      iconClass: 'bg-navy-100 text-navy-700',
+      label: 'Diplômés de la promotion',
+      text: `Tu as obtenu ton diplôme en ${PROMOTION} : viens le célébrer avec nous.`,
+      badge: event ? priceLabel(event.alumniPriceCents, event.currency) : 'Gratuit',
+      badgeClass: event && event.alumniPriceCents > 0 ? 'bg-brand-100 text-brand-800' : 'bg-emerald-100 text-emerald-800',
+      iconClass: 'bg-brand-100 text-brand-600',
       featured: true,
     },
     {
       icon: Users,
-      label: 'Anciens étudiants',
-      text: 'Retrouve tes anciens camarades et reste connecté à la communauté.',
-      badge: event ? priceLabel(event.alumniPriceCents, event.currency) : 'Gratuit',
-      badgeClass: event && event.alumniPriceCents > 0 ? 'bg-brand-100 text-brand-800' : 'bg-emerald-100 text-emerald-800',
-      iconClass: 'bg-brand-100 text-brand-600',
+      label: 'Étudiants',
+      text: 'Viens applaudir tes aînés et découvrir où mène le parcours.',
+      badge: 'Inscription gratuite',
+      badgeClass: 'bg-emerald-100 text-emerald-800',
+      iconClass: 'bg-navy-100 text-navy-700',
       featured: false,
     },
     {
       icon: UserRound,
-      label: 'Autres / Invités',
-      text: 'Partenaires, familles, amis… vous êtes les bienvenus !',
+      label: 'Familles & invités',
+      text: 'Parents, amis, partenaires… venez partager leur fierté !',
       badge: event ? priceLabel(event.otherPriceCents, event.currency) : 'Gratuit',
       badgeClass: event && event.otherPriceCents > 0 ? 'bg-navy-100 text-navy-800' : 'bg-emerald-100 text-emerald-800',
       iconClass: 'bg-navy-100 text-navy-600',
@@ -129,7 +133,7 @@ export function LandingPage() {
         <div className="absolute inset-0 -z-20">
           <SmartImage
             src="/images/hero.jpg"
-            alt="Étudiants réunis lors de la cérémonie d'accueil"
+            alt="Membres de la communauté réunis lors d'un événement du CPBA"
             caption="Ajoutez public/images/hero.jpg"
             tone="mixed"
             className="h-full w-full"
@@ -144,16 +148,17 @@ export function LandingPage() {
 
         <div className="container relative py-24 sm:py-32 lg:py-40">
           <div className="max-w-2xl animate-fade-up">
-            <Eyebrow light>Événement de bienvenue</Eyebrow>
+            <Eyebrow light>Remise des diplômes · Promotion {PROMOTION}</Eyebrow>
 
             <h1 className="mt-5 font-display text-5xl font-extrabold leading-[1.05] text-white sm:text-6xl lg:text-7xl">
-              Bienvenue
-              <span className="mt-1 block text-brand-400">dans l'aventure !</span>
+              Bravo
+              <span className="mt-1 block text-brand-400">à nos diplômés !</span>
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-navy-100">
-              Une soirée pour faire connaissance, découvrir la vie étudiante et
-              partager un moment convivial avec toute la communauté.
+              Une soirée pour célébrer la réussite des diplômés de la promotion{' '}
+              {PROMOTION}, entourés de leurs familles, de leurs amis et de toute
+              la communauté.
             </p>
 
             {/* Infos clés */}
@@ -161,11 +166,11 @@ export function LandingPage() {
               <InfoCard
                 icon={CalendarDays}
                 title={event ? formatDate(event.date) : '—'}
-                subtitle={event?.startTime ? `À partir de ${event.startTime.slice(0, 5).replace(':', 'h')}` : 'Soirée'}
+                subtitle={event?.startTime ? `À partir de ${event.startTime.slice(0, 5).replace(':', 'h')}` : 'Horaire à confirmer'}
               />
               <InfoCard
                 icon={MapPin}
-                title={event?.location ?? associationConfig.address}
+                title={event?.location || 'Lieu à confirmer'}
                 subtitle="Lieu de la cérémonie"
               />
             </div>
@@ -182,7 +187,7 @@ export function LandingPage() {
             className="pointer-events-none absolute bottom-12 right-6 hidden max-w-[15rem] -rotate-6 text-right text-brand-300 lg:block"
           >
             <span className="handwritten text-3xl">
-              De nouveaux visages,<br />les mêmes valeurs !
+              Des années d'efforts,<br />une soirée de fierté !
             </span>
             <Squiggle className="ml-auto mt-1 w-40 text-brand-400" />
           </p>
@@ -193,16 +198,17 @@ export function LandingPage() {
       <section id="a-propos" className="scroll-mt-20 bg-cream py-20 lg:py-28">
         <div className="container grid items-center gap-14 lg:grid-cols-2">
           <div>
-            <Eyebrow>Un événement pour tous</Eyebrow>
+            <Eyebrow>Une soirée de fierté</Eyebrow>
             <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-navy-900 sm:text-5xl">
-              Plus qu'une rencontre,
+              Plus qu'une cérémonie,
               <br />
-              une vraie expérience !
+              un aboutissement !
             </h2>
             <p className="mt-6 max-w-lg leading-relaxed text-navy-700">
-              Que tu sois nouvel étudiant, ancien ou simplement invité, cette
-              soirée est faite pour toi. Profite d'un moment unique pour
-              t'informer, échanger et créer des liens durables.
+              Que tu sois diplômé de la promotion {PROMOTION}, étudiant venu
+              applaudir tes aînés ou proche venu partager ce moment, cette
+              soirée est faite pour toi. Ensemble, on célèbre des années de
+              travail, d'entraide et de persévérance.
             </p>
           </div>
 
@@ -211,7 +217,7 @@ export function LandingPage() {
             <div className="rotate-2 rounded-3xl bg-white p-3 shadow-lift transition-transform duration-300 motion-safe:hover:rotate-0">
               <SmartImage
                 src="/images/village.jpg"
-                alt="Village des associations lors de l'événement"
+                alt="Moment d'échange lors d'un événement du CPBA"
                 caption="public/images/village.jpg"
                 tone="navy"
                 className="aspect-[4/3] rounded-2xl"
@@ -269,8 +275,12 @@ export function LandingPage() {
           <div>
             <Eyebrow>Le programme</Eyebrow>
             <h2 className="mt-4 font-display text-3xl font-bold text-navy-900 sm:text-4xl">
-              Une soirée riche en découvertes
+              Une soirée en l'honneur des diplômés
             </h2>
+            <p className="mt-3 text-sm text-navy-600">
+              Déroulé indicatif : les horaires précis seront communiqués
+              prochainement.
+            </p>
 
             <ol className="mt-10">
               {PROGRAMME.map((item, i) => (
@@ -347,7 +357,7 @@ export function LandingPage() {
             <div className="-rotate-2 overflow-hidden rounded-4xl shadow-lift transition-transform duration-300 motion-safe:hover:rotate-0">
               <SmartImage
                 src="/images/groupe.jpg"
-                alt="Groupe d'étudiants échangeant en extérieur"
+                alt="Groupe de membres de la communauté réunis"
                 caption="public/images/groupe.jpg"
                 tone="mixed"
                 className="aspect-[4/3]"
@@ -358,7 +368,7 @@ export function LandingPage() {
               className="absolute bottom-4 left-6 hidden max-w-[16rem] text-white lg:block"
             >
               <span className="handwritten text-2xl drop-shadow">
-                Ici, tu n'es pas juste un étudiant,<br />tu fais partie d'une communauté.
+                Ici, chaque diplôme est<br />une victoire collective.
               </span>
             </p>
           </div>
@@ -366,7 +376,7 @@ export function LandingPage() {
           <div className="order-1 lg:order-2">
             <Eyebrow>Pourquoi venir ?</Eyebrow>
             <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-navy-900 sm:text-4xl">
-              Parce que ta nouvelle vie commence ici !
+              Parce qu'une réussite, ça se fête ensemble !
             </h2>
 
             <div className="mt-10 grid gap-7 sm:grid-cols-2">
@@ -424,8 +434,8 @@ export function LandingPage() {
             </p>
             <p className="mt-4 leading-relaxed text-navy-600">
               Tout au long de l'année, nous organisons des rencontres, des
-              moments festifs et des temps d'entraide pour que personne ne
-              traverse seul son arrivée.
+              moments festifs et des temps d'entraide pour accompagner chacun,
+              de son arrivée jusqu'à son diplôme.
             </p>
             <p className="mt-6">
               <span className="handwritten text-2xl text-brand-600">
@@ -495,9 +505,9 @@ export function LandingPage() {
             <div aria-hidden="true" className="grain absolute inset-0" />
 
             <div className="relative">
-              <Eyebrow light center>Prêt à vivre cette belle aventure ?</Eyebrow>
+              <Eyebrow light center>Promotion {PROMOTION}</Eyebrow>
               <h2 className="mx-auto mt-4 max-w-2xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-                Rejoins-nous pour une soirée inoubliable !
+                {event ? `Rejoins-nous le ${formatDate(event.date)} pour célébrer nos diplômés !` : 'Rejoins-nous pour célébrer nos diplômés !'}
               </h2>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <CtaPrimary to="/inscription">Je m'inscris maintenant</CtaPrimary>

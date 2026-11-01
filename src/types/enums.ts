@@ -146,9 +146,9 @@ export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 
 /** Libellés lisibles (FR) pour l'affichage. Séparés des valeurs métier. */
 export const PARTICIPANT_TYPE_LABELS: Record<ParticipantType, string> = {
-  NEW_STUDENT: 'Nouveau étudiant',
-  ALUMNI: 'Ancien étudiant',
-  OTHER: 'Autre / Invité',
+  NEW_STUDENT: 'Étudiant',
+  ALUMNI: 'Diplômé / Ancien étudiant',
+  OTHER: 'Famille / Invité',
 };
 
 export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {

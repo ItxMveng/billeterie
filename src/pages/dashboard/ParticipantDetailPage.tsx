@@ -492,7 +492,7 @@ function Row({ label, value }: { label: string; value: string }) {
 /** Message pré-rempli pour transmettre le billet par email. */
 function buildMailto(link: TicketLink): string {
   const url = `${window.location.origin}/mon-billet?t=${link.access_token}`;
-  const sujet = `Votre billet ${link.ticket_number} — ${link.event_name ?? 'Cérémonie d\u2019accueil'}`;
+  const sujet = `Votre billet ${link.ticket_number} — ${link.event_name ?? 'Remise des diplômes'}`;
   const corps = [
     `Bonjour ${link.first_name},`,
     '',
