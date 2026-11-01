@@ -2,8 +2,8 @@
  * Schémas de validation Zod pour l'inscription d'un participant.
  *
  * La validation est CONDITIONNELLE à la catégorie :
- * - ALUMNI : ancienne école obligatoire.
- * - OTHER / NEW_STUDENT : école non requise.
+ * - NEW_STUDENT : école obligatoire.
+ * - ALUMNI / CPBA_GUEST / OTHER : école non demandée.
  *
  * ⚠️ La validation client ne remplace pas les contraintes base + RLS.
  * On ne fait jamais confiance aux données du frontend (voir SECURITY.md).
@@ -44,7 +44,7 @@ const baseParticipant = z.object({
     .min(1, 'Le téléphone est obligatoire.')
     .regex(PHONE_REGEX, 'Numéro de téléphone invalide.'),
   // École : optionnelle au niveau du champ, rendue obligatoire par le refine
-  // pour la catégorie ALUMNI.
+  // pour la catégorie NEW_STUDENT.
   school_id: z.string().uuid('École invalide.').optional().nullable(),
   /**
    * Numéro étudiant officiel — FACULTATIF. Proposé aux nouveaux étudiants :
@@ -61,19 +61,15 @@ const baseParticipant = z.object({
 
 /**
  * Schéma complet de l'inscription publique.
- * `superRefine` applique la règle « école obligatoire » (NEW_STUDENT + ALUMNI).
+ * `superRefine` applique la règle « école obligatoire » (NEW_STUDENT).
  */
 export const registrationSchema = baseParticipant.superRefine((data, ctx) => {
-  // École obligatoire pour les nouveaux étudiants (école actuelle) comme pour
-  // les anciens (ancienne école). Facultative pour les invités.
+  // École obligatoire pour les étudiants uniquement.
   if (requiresSchool(data.participant_type) && !data.school_id) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['school_id'],
-      message:
-        data.participant_type === ParticipantType.ALUMNI
-          ? "L'ancienne école est obligatoire pour un ancien étudiant."
-          : "Merci d'indiquer l'école dans laquelle vous étudiez.",
+      message: "Merci d'indiquer l'école dans laquelle vous étudiez.",
     });
   }
 });

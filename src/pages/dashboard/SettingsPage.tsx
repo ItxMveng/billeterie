@@ -2,7 +2,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { EventService } from '@/features/events/EventService';
 import { SchoolService } from '@/features/schools/SchoolService';
 import { paymentConfig, associationConfig } from '@/config/event.config';
-import { formatDate, formatMoney } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -44,8 +44,6 @@ export function SettingsPage() {
               <Detail label="Nom" value={event.data.name} />
               <Detail label="Date" value={formatDate(event.data.date)} />
               <Detail label="Lieu" value={event.data.location ?? '—'} />
-              <Detail label="Prix ancien" value={formatMoney(event.data.alumniPriceCents, event.data.currency)} />
-              <Detail label="Prix invité" value={formatMoney(event.data.otherPriceCents, event.data.currency)} />
             </CardContent>
           </Card>
         </>

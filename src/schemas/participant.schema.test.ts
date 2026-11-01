@@ -70,16 +70,10 @@ describe('registrationSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('ALUMNI sans école → refusé', () => {
-    const result = registrationSchema.safeParse({
-      ...base,
-      participant_type: ParticipantType.ALUMNI,
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(
-        result.error.issues.some((i) => i.path.includes('school_id')),
-      ).toBe(true);
+  it('ALUMNI (diplômé) et CPBA_GUEST sans école → acceptés', () => {
+    for (const type of [ParticipantType.ALUMNI, ParticipantType.CPBA_GUEST]) {
+      const result = registrationSchema.safeParse({ ...base, participant_type: type });
+      expect(result.success).toBe(true);
     }
   });
 

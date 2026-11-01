@@ -25,6 +25,14 @@ export interface EventStats {
   by_school: Array<{ school: string; count: number }>;
 }
 
+/**
+ * Invités du CPBA : catégorie ajoutée après la RPC de stats, qui ne la compte
+ * pas à part. On la déduit du total moins les trois catégories historiques.
+ */
+export function cpbaGuests(s: EventStats): number {
+  return Math.max(0, s.participants_total - s.new_students - s.alumni - s.others);
+}
+
 export interface TimeSeries {
   registrations: Array<{ day: string; count: number }>;
   checkins: Array<{ day: string; count: number }>;

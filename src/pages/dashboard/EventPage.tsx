@@ -4,7 +4,6 @@ import { useAsync } from '@/hooks/useAsync';
 import { useAuth } from '@/features/auth/useAuth';
 import { EventService } from '@/features/events/EventService';
 import { AppError } from '@/lib/errors';
-import { formatMoney } from '@/lib/utils';
 import { EventStatus } from '@/types/enums';
 import type { EventRow } from '@/types/database';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -28,6 +27,8 @@ interface FormState {
   name: string;
   date: string;
   location: string;
+  /** Heure de début (HH:MM), vide si à confirmer. */
+  startTime: string;
   alumniEuros: string;
   otherEuros: string;
   currency: string;
@@ -38,8 +39,10 @@ const EMPTY: FormState = {
   name: '',
   date: '',
   location: '',
-  alumniEuros: '25.00',
-  otherEuros: '25.00',
+  startTime: '',
+  // Tarifs non affichés : la participation n'est pas tarifée.
+  alumniEuros: '0',
+  otherEuros: '0',
   currency: 'EUR',
   status: EventStatus.PUBLISHED,
 };
@@ -49,6 +52,7 @@ function toForm(row: EventRow): FormState {
     name: row.name,
     date: row.date,
     location: row.location ?? '',
+    startTime: row.start_time?.slice(0, 5) ?? '',
     alumniEuros: centsToEuros(row.alumni_price_cents),
     otherEuros: centsToEuros(row.other_price_cents),
     currency: row.currency,
@@ -92,6 +96,7 @@ export function EventPage() {
       name: form.name.trim(),
       date: form.date,
       location: form.location.trim() || null,
+      start_time: form.startTime || null,
       alumni_price_cents: eurosToCents(form.alumniEuros),
       other_price_cents: eurosToCents(form.otherEuros),
       currency: form.currency.trim().toUpperCase() || 'EUR',
@@ -102,7 +107,7 @@ export function EventPage() {
     try {
       if (selectedId) {
         await EventService.update(selectedId, patch);
-        setMessage('Événement mis à jour. Les nouveaux prix sont visibles immédiatement.');
+        setMessage('Événement mis à jour. Les changements sont visibles immédiatement sur le site.');
       } else {
         const created = await EventService.create(patch);
         setSelectedId(created.id);
@@ -123,8 +128,8 @@ export function EventPage() {
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Événement</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Nom, date, lieu et <strong>tarifs</strong>. Les montants sont saisis en
-          euros et convertis en centimes pour la base.
+          Nom, date, heure et lieu de l'événement affichés sur le site. Laissez
+          l'heure ou le lieu vides pour afficher « à confirmer ».
         </p>
       </header>
 
@@ -207,45 +212,15 @@ export function EventPage() {
                   )}
                 </Field>
 
-                <Field
-                  label="Prix ancien étudiant (€)"
-                  hint={`Actuellement : ${formatMoney(eurosToCents(form.alumniEuros), form.currency)}`}
-                >
+                <Field label="Heure de début" hint="Vide = « horaire à confirmer ».">
                   {({ id, describedBy }) => (
                     <Input
                       id={id}
-                      inputMode="decimal"
+                      type="time"
                       aria-describedby={describedBy}
-                      value={form.alumniEuros}
+                      value={form.startTime}
                       disabled={!canWrite}
-                      onChange={(e) => set('alumniEuros', e.target.value)}
-                    />
-                  )}
-                </Field>
-
-                <Field
-                  label="Prix invité / autre (€)"
-                  hint={`Actuellement : ${formatMoney(eurosToCents(form.otherEuros), form.currency)}`}
-                >
-                  {({ id, describedBy }) => (
-                    <Input
-                      id={id}
-                      inputMode="decimal"
-                      aria-describedby={describedBy}
-                      value={form.otherEuros}
-                      disabled={!canWrite}
-                      onChange={(e) => set('otherEuros', e.target.value)}
-                    />
-                  )}
-                </Field>
-
-                <Field label="Devise">
-                  {({ id }) => (
-                    <Input
-                      id={id}
-                      value={form.currency}
-                      disabled={!canWrite}
-                      onChange={(e) => set('currency', e.target.value)}
+                      onChange={(e) => set('startTime', e.target.value)}
                     />
                   )}
                 </Field>
@@ -277,11 +252,6 @@ export function EventPage() {
               </form>
             </CardContent>
           </Card>
-
-          <p className="text-xs text-slate-400">
-            Les prix affichés au public sont indicatifs ; le montant facturé est
-            recalculé côté serveur à la création de chaque paiement.
-          </p>
         </>
       )}
     </div>

@@ -155,7 +155,7 @@ export function ParticipantDetailPage() {
                     </Field>
                     <Field
                       label="École"
-                      hint={data.participant.participant_type === 'ALUMNI' ? 'Obligatoire pour un ancien étudiant' : undefined}
+                      hint={data.participant.participant_type === 'NEW_STUDENT' ? 'Obligatoire pour un étudiant' : undefined}
                     >
                       {({ id: fid, describedBy }) => (
                         <Select id={fid} aria-describedby={describedBy} value={form.school_id}

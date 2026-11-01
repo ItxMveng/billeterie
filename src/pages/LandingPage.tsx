@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import {
   CalendarDays,
   MapPin,
+  Clock,
   ArrowRight,
   Users,
   Sparkles,
   Camera,
   HeartHandshake,
   GraduationCap,
-  UserRound,
   Award,
   QrCode,
   ShieldCheck,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { EventService, type ResolvedEvent } from '@/features/events/EventService';
 import { associationConfig } from '@/config/event.config';
-import { formatDate, formatMoney } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { SmartImage } from '@/components/ui/SmartImage';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 
@@ -35,20 +35,28 @@ const PILIERS = [
   { icon: Users, color: 'brand', title: 'Rester connectés', text: 'Le diplôme en poche, la communauté reste là.' },
 ] as const;
 
-// Déroulé indicatif : les horaires précis seront communiqués prochainement.
+// Déroulé de la soirée : l'heure de début vient de l'événement (base).
 const PROGRAMME = [
-  { time: 'À confirmer', title: 'Accueil des invités', text: 'Émargement et installation des diplômés et de leurs proches.' },
-  { time: 'À confirmer', title: "Mot d'ouverture", text: 'Discours du bureau du CPBA.' },
-  { time: 'À confirmer', title: 'Témoignages', text: 'Des diplômés racontent leur parcours, de l’arrivée au diplôme.' },
-  { time: 'À confirmer', title: 'Remise des diplômes', text: 'Appel des diplômés, école par école, et passage sur scène.' },
-  { time: 'À confirmer', title: 'Photo de promotion', text: 'Photo officielle de la promo, puis photos avec les proches.' },
-  { time: 'À confirmer', title: 'Cocktail & moment convivial', text: "Échanges entre promotions autour d'un buffet, en musique." },
+  { title: 'Accueil des invités', text: 'Installation des diplômés et de leurs proches.' },
+  { title: "Mot d'ouverture", text: 'Discours du bureau du CPBA.' },
+  { title: 'Témoignages', text: 'Des diplômés racontent leur parcours.' },
+  { title: 'Remise des diplômes', text: 'Chaque diplômé est appelé sur scène.' },
+  { title: 'Photo de promotion', text: 'Photo officielle, puis photos avec les proches.' },
+  { title: 'Cocktail', text: 'Un moment convivial pour clôturer la soirée.' },
+];
+
+/** Qui peut s'inscrire — même ordre que le formulaire d'inscription. */
+const CATEGORIES = [
+  { icon: GraduationCap, label: 'Diplômés', text: `Promotion ${PROMOTION}.` },
+  { icon: Award, label: 'Invités du CPBA', text: 'Personnalités et partenaires conviés par l’association.' },
+  { icon: HeartHandshake, label: 'Familles', text: 'Parents, proches et amis des diplômés.' },
+  { icon: Users, label: 'Étudiants', text: 'Venus applaudir la promotion.' },
 ];
 
 const RAISONS = [
-  { icon: Award, title: 'Célébrer ta réussite', text: 'Des années d’efforts méritent une vraie soirée.' },
-  { icon: HeartHandshake, title: 'Partager avec tes proches', text: 'Famille et amis sont invités à fêter ça avec toi.' },
-  { icon: Sparkles, title: 'Inspirer la relève', text: 'Ton parcours motive ceux qui arrivent.' },
+  { icon: Award, title: 'Célébrer la réussite', text: 'Des années d’efforts méritent une vraie cérémonie.' },
+  { icon: HeartHandshake, title: 'Partager avec ses proches', text: 'Familles et amis sont conviés à ce moment.' },
+  { icon: Sparkles, title: 'Inspirer la relève', text: 'Chaque parcours motive ceux qui arrivent.' },
   { icon: Camera, title: 'Garder un souvenir', text: 'Photo de promo et moments à immortaliser.' },
 ];
 
@@ -57,15 +65,11 @@ const RAISONS = [
 const FAQ = [
   {
     q: 'Qui peut participer à la cérémonie ?',
-    a: `Les diplômés de la promotion ${PROMOTION}, les étudiants et anciens de la communauté, ainsi que les familles et invités.`,
-  },
-  {
-    q: "L'inscription est-elle payante ?",
-    a: 'Non. La participation est entièrement gratuite pour tout le monde : diplômés, étudiants et invités.',
+    a: `Les diplômés de la promotion ${PROMOTION}, les invités du CPBA, les familles et proches des diplômés, ainsi que les étudiants.`,
   },
   {
     q: 'Je suis diplômé(e), dois-je aussi inscrire mes proches ?',
-    a: 'Oui : chaque personne présente a besoin de son propre billet. Vos proches s’inscrivent dans la catégorie « Familles & invités ».',
+    a: 'Oui : chaque personne présente a besoin de son propre billet. Vos proches s’inscrivent dans la catégorie « Famille ».',
   },
   {
     q: 'Comment obtiendrai-je mon billet ?',
@@ -83,11 +87,6 @@ const FAQ = [
 
 /* -------------------------------------------------------------------------- */
 
-/** Libellé de tarif : « Gratuit » quand aucun montant n'est demandé. */
-function priceLabel(cents: number, currency: string): string {
-  return cents > 0 ? formatMoney(cents, currency) : 'Gratuit';
-}
-
 export function LandingPage() {
   const [event, setEvent] = useState<ResolvedEvent | null>(null);
 
@@ -95,36 +94,7 @@ export function LandingPage() {
     void EventService.getActiveEvent().then(setEvent);
   }, []);
 
-  // Les diplômés s'inscrivent dans la catégorie ALUMNI (tarif alumni).
-  const categories = [
-    {
-      icon: GraduationCap,
-      label: 'Diplômés de la promotion',
-      text: `Tu as obtenu ton diplôme en ${PROMOTION} : viens le célébrer avec nous.`,
-      badge: event ? priceLabel(event.alumniPriceCents, event.currency) : 'Gratuit',
-      badgeClass: event && event.alumniPriceCents > 0 ? 'bg-brand-100 text-brand-800' : 'bg-emerald-100 text-emerald-800',
-      iconClass: 'bg-brand-100 text-brand-600',
-      featured: true,
-    },
-    {
-      icon: Users,
-      label: 'Étudiants',
-      text: 'Viens applaudir tes aînés et découvrir où mène le parcours.',
-      badge: 'Inscription gratuite',
-      badgeClass: 'bg-emerald-100 text-emerald-800',
-      iconClass: 'bg-navy-100 text-navy-700',
-      featured: false,
-    },
-    {
-      icon: UserRound,
-      label: 'Familles & invités',
-      text: 'Parents, amis, partenaires… venez partager leur fierté !',
-      badge: event ? priceLabel(event.otherPriceCents, event.currency) : 'Gratuit',
-      badgeClass: event && event.otherPriceCents > 0 ? 'bg-navy-100 text-navy-800' : 'bg-emerald-100 text-emerald-800',
-      iconClass: 'bg-navy-100 text-navy-600',
-      featured: false,
-    },
-  ];
+  const startLabel = event?.startTime ? formatTime(event.startTime) : null;
 
   return (
     <>
@@ -133,7 +103,7 @@ export function LandingPage() {
         <div className="absolute inset-0 -z-20">
           <SmartImage
             src="/images/hero.jpg"
-            alt="Membres de la communauté réunis lors d'un événement du CPBA"
+            alt="Membres du CPBA et invités réunis autour des drapeaux du Cameroun et de la France"
             caption="Ajoutez public/images/hero.jpg"
             tone="mixed"
             className="h-full w-full"
@@ -166,7 +136,7 @@ export function LandingPage() {
               <InfoCard
                 icon={CalendarDays}
                 title={event ? formatDate(event.date) : '—'}
-                subtitle={event?.startTime ? `À partir de ${event.startTime.slice(0, 5).replace(':', 'h')}` : 'Horaire à confirmer'}
+                subtitle={startLabel ? `À partir de ${startLabel}` : 'Horaire à confirmer'}
               />
               <InfoCard
                 icon={MapPin}
@@ -176,7 +146,7 @@ export function LandingPage() {
             </div>
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <CtaPrimary to="/inscription">Je m'inscris maintenant</CtaPrimary>
+              <CtaPrimary to="/inscription">S'inscrire</CtaPrimary>
               <CtaGhost to="#a-propos">En savoir plus</CtaGhost>
             </div>
           </div>
@@ -205,10 +175,9 @@ export function LandingPage() {
               un aboutissement !
             </h2>
             <p className="mt-6 max-w-lg leading-relaxed text-navy-700">
-              Que tu sois diplômé de la promotion {PROMOTION}, étudiant venu
-              applaudir tes aînés ou proche venu partager ce moment, cette
-              soirée est faite pour toi. Ensemble, on célèbre des années de
-              travail, d'entraide et de persévérance.
+              Diplômés de la promotion {PROMOTION}, familles, invités et
+              étudiants : cette soirée est faite pour vous. Ensemble, nous
+              célébrons des années de travail, d'entraide et de persévérance.
             </p>
           </div>
 
@@ -217,7 +186,7 @@ export function LandingPage() {
             <div className="rotate-2 rounded-3xl bg-white p-3 shadow-lift transition-transform duration-300 motion-safe:hover:rotate-0">
               <SmartImage
                 src="/images/village.jpg"
-                alt="Moment d'échange lors d'un événement du CPBA"
+                alt="Étudiants du CPBA en tenues traditionnelles camerounaises"
                 caption="public/images/village.jpg"
                 tone="navy"
                 className="aspect-[4/3] rounded-2xl"
@@ -269,83 +238,77 @@ export function LandingPage() {
       </section>
 
       {/* ═══════════════════════ PROGRAMME + CATÉGORIES ═══════════════════════ */}
-      <section id="programme" className="scroll-mt-20 bg-navy-50 py-20 lg:py-28">
-        <div className="container grid gap-16 lg:grid-cols-2">
-          {/* Programme */}
-          <div>
-            <Eyebrow>Le programme</Eyebrow>
-            <h2 className="mt-4 font-display text-3xl font-bold text-navy-900 sm:text-4xl">
-              Une soirée en l'honneur des diplômés
+      <section id="programme" className="scroll-mt-20 bg-navy-950 py-20 text-white lg:py-28">
+        <div className="container">
+          <div className="max-w-2xl">
+            <Eyebrow light>Le programme</Eyebrow>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-tight sm:text-4xl">
+              Le déroulé de la soirée
             </h2>
-            <p className="mt-3 text-sm text-navy-600">
-              Déroulé indicatif : les horaires précis seront communiqués
-              prochainement.
-            </p>
-
-            <ol className="mt-10">
-              {PROGRAMME.map((item, i) => (
-                <li key={item.title} className="relative flex gap-5 pb-8 last:pb-0">
-                  {i < PROGRAMME.length - 1 && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute left-[9px] top-6 h-full w-[2px] bg-brand-200"
-                    />
-                  )}
-                  <span
-                    aria-hidden="true"
-                    className="relative mt-1.5 h-5 w-5 shrink-0 rounded-full border-[5px] border-brand-200 bg-brand-500"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-display text-sm font-bold text-brand-600">
-                      {item.time}
-                    </p>
-                    <h3 className="mt-0.5 font-semibold text-navy-900">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-navy-600">
-                      {item.text}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
           </div>
 
-          {/* Catégories */}
-          <div id="categories" className="scroll-mt-20">
-            <Eyebrow>Les catégories</Eyebrow>
-            <h2 className="mt-4 font-display text-3xl font-bold text-navy-900 sm:text-4xl">
-              Qui peut participer ?
-            </h2>
+          {/* Repères clés */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <KeyFact icon={CalendarDays}>{event ? formatDate(event.date) : '—'}</KeyFact>
+            <KeyFact icon={Clock}>{startLabel ?? 'Horaire à confirmer'}</KeyFact>
+            <KeyFact icon={MapPin}>{event?.location || 'Lieu à confirmer'}</KeyFact>
+          </div>
 
-            <ul className="mt-10 space-y-4">
-              {categories.map(({ icon: Icon, label, text, badge, badgeClass, iconClass, featured }) => (
+          {/* Étapes numérotées */}
+          <ol className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+            {PROGRAMME.map((step, i) => (
+              <li key={step.title} className="bg-navy-950 p-6 sm:p-7">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-display text-4xl font-extrabold text-brand-400">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  {i === 0 && startLabel && (
+                    <span className="rounded-full bg-brand-500/20 px-3 py-1 text-sm font-semibold text-brand-200">
+                      {startLabel}
+                    </span>
+                  )}
+                </div>
+                <h3 className="mt-3 font-display text-lg font-semibold">{step.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-navy-200">{step.text}</p>
+              </li>
+            ))}
+          </ol>
+
+          {/* Qui peut s'inscrire */}
+          <div id="categories" className="mt-20 scroll-mt-20">
+            <Eyebrow light>Les inscriptions</Eyebrow>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-tight sm:text-4xl">
+              Qui peut s'inscrire ?
+            </h2>
+            <p className="mt-3 max-w-xl text-navy-200">
+              Chaque personne présente doit avoir son propre billet.
+            </p>
+
+            <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {CATEGORIES.map(({ icon: Icon, label, text }, i) => (
                 <li
                   key={label}
-                  className={
-                    'relative rounded-3xl border bg-white p-6 shadow-soft transition-transform duration-200 motion-safe:hover:-translate-y-1 ' +
-                    (featured ? 'border-brand-300 ring-1 ring-brand-200' : 'border-navy-100')
-                  }
+                  className={'rounded-3xl p-6 ' + (i === 0 ? 'bg-brand-500 text-white' : 'bg-white text-navy-900')}
                 >
-                  <div className="flex items-start gap-4">
-                    <span className={'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ' + iconClass}>
-                      <Icon className="h-6 w-6" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-display text-lg font-semibold text-navy-900">
-                        {label}
-                      </h3>
-                      <p className="mt-1 text-sm leading-relaxed text-navy-600">{text}</p>
-                      <span className={'mt-3 inline-block rounded-full px-3 py-1 text-xs font-semibold ' + badgeClass}>
-                        {badge}
-                      </span>
-                    </div>
-                  </div>
+                  <span
+                    className={
+                      'inline-flex h-12 w-12 items-center justify-center rounded-2xl ' +
+                      (i === 0 ? 'bg-white/20 text-white' : 'bg-brand-100 text-brand-600')
+                    }
+                  >
+                    <Icon className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-4 font-display text-xl font-bold">{label}</h3>
+                  <p className={'mt-1 text-sm leading-relaxed ' + (i === 0 ? 'text-white/90' : 'text-navy-600')}>
+                    {text}
+                  </p>
                 </li>
               ))}
             </ul>
 
-            <p className="mt-5 text-xs text-navy-500">
-              La participation est gratuite pour toutes les catégories.
-            </p>
+            <div className="mt-10">
+              <CtaPrimary to="/inscription">S'inscrire</CtaPrimary>
+            </div>
           </div>
         </div>
       </section>
@@ -357,7 +320,7 @@ export function LandingPage() {
             <div className="-rotate-2 overflow-hidden rounded-4xl shadow-lift transition-transform duration-300 motion-safe:hover:rotate-0">
               <SmartImage
                 src="/images/groupe.jpg"
-                alt="Groupe de membres de la communauté réunis"
+                alt="Membres du CPBA réunis à l'ENIB"
                 caption="public/images/groupe.jpg"
                 tone="mixed"
                 className="aspect-[4/3]"
@@ -507,10 +470,10 @@ export function LandingPage() {
             <div className="relative">
               <Eyebrow light center>Promotion {PROMOTION}</Eyebrow>
               <h2 className="mx-auto mt-4 max-w-2xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-                {event ? `Rejoins-nous le ${formatDate(event.date)} pour célébrer nos diplômés !` : 'Rejoins-nous pour célébrer nos diplômés !'}
+                {event ? `Rejoignez-nous le ${formatDate(event.date)} pour célébrer nos diplômés !` : 'Rejoignez-nous pour célébrer nos diplômés !'}
               </h2>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <CtaPrimary to="/inscription">Je m'inscris maintenant</CtaPrimary>
+                <CtaPrimary to="/inscription">S'inscrire</CtaPrimary>
                 <CtaGhost to="/mon-billet">J'ai déjà un billet</CtaGhost>
               </div>
             </div>
@@ -544,6 +507,20 @@ function Eyebrow({
       {children}
     </p>
   );
+}
+
+function KeyFact({ icon: Icon, children }: { icon: typeof CalendarDays; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium">
+      <Icon className="h-4 w-4 text-brand-300" aria-hidden="true" />
+      {children}
+    </span>
+  );
+}
+
+/** « 20:00:00 » → « 20h00 ». */
+function formatTime(time: string): string {
+  return time.slice(0, 5).replace(':', 'h');
 }
 
 function InfoCard({

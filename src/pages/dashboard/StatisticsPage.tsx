@@ -1,6 +1,5 @@
 import { useAsync } from '@/hooks/useAsync';
-import { StatsService } from '@/features/stats/StatsService';
-import { PAYMENT_STATUS_LABELS, type PaymentStatus } from '@/types/enums';
+import { StatsService, cpbaGuests } from '@/features/stats/StatsService';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -31,22 +30,11 @@ export function StatisticsPage() {
             <CardContent>
               <BarList
                 items={[
-                  { label: 'Nouveaux étudiants', value: overview.data.new_students },
-                  { label: 'Anciens', value: overview.data.alumni },
-                  { label: 'Autres / Invités', value: overview.data.others },
+                  { label: 'Diplômés', value: overview.data.alumni },
+                  { label: 'Invités du CPBA', value: cpbaGuests(overview.data) },
+                  { label: 'Familles', value: overview.data.others },
+                  { label: 'Étudiants', value: overview.data.new_students },
                 ]}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Paiements par statut</CardTitle></CardHeader>
-            <CardContent>
-              <BarList
-                items={Object.entries(overview.data.payment_breakdown).map(([k, v]) => ({
-                  label: PAYMENT_STATUS_LABELS[k as PaymentStatus] ?? k,
-                  value: v,
-                }))}
               />
             </CardContent>
           </Card>

@@ -240,22 +240,23 @@ export function PortalPage() {
             }
           />
 
-          <Step
-            done={!paymentRequired || s.payment_status === 'PAID'}
-            failed={s.payment_status === 'REJECTED' || s.payment_status === 'FAILED'}
-            label="Paiement"
-            detail={
-              !paymentRequired
-                ? 'Participation gratuite'
-                : s.payment_status === 'PAID'
+          {/* Étape paiement affichée seulement si un tarif est un jour configuré. */}
+          {paymentRequired && (
+            <Step
+              done={s.payment_status === 'PAID'}
+              failed={s.payment_status === 'REJECTED' || s.payment_status === 'FAILED'}
+              label="Paiement"
+              detail={
+                s.payment_status === 'PAID'
                   ? 'Paiement confirmé'
                   : s.payment_status === PaymentStatus.AWAITING_CONFIRMATION
                     ? 'Déclaré — en attente de confirmation'
                     : s.payment_status === 'REJECTED' || s.payment_status === 'FAILED'
                       ? 'Non validé'
                       : 'À effectuer'
-            }
-          />
+              }
+            />
+          )}
 
           <Step
             done={s.ticket_status === 'GENERATED'}

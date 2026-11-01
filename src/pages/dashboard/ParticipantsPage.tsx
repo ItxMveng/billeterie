@@ -83,8 +83,8 @@ export function ParticipantsPage() {
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.first_name.trim() || !form.last_name.trim() || !form.email.trim()) return;
-    if (form.participant_type === ParticipantType.ALUMNI && !form.school_id) {
-      toast.error("L'école est obligatoire pour un ancien étudiant.");
+    if (form.participant_type === ParticipantType.NEW_STUDENT && !form.school_id) {
+      toast.error("L'école est obligatoire pour un étudiant.");
       return;
     }
     setCreating(true);
@@ -205,7 +205,7 @@ export function ParticipantsPage() {
               </Field>
               <Field
                 label="École"
-                hint={form.participant_type === ParticipantType.ALUMNI ? 'Obligatoire' : 'Facultative'}
+                hint={form.participant_type === ParticipantType.NEW_STUDENT ? 'Obligatoire' : 'Facultative'}
               >
                 {({ id, describedBy }) => (
                   <Select id={id} aria-describedby={describedBy} value={form.school_id}

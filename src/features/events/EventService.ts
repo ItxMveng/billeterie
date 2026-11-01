@@ -84,6 +84,7 @@ export const EventService = {
     name: string;
     date: string;
     location?: string | null;
+    start_time?: string | null;
     alumni_price_cents: number;
     other_price_cents: number;
     currency?: string;
@@ -96,6 +97,7 @@ export const EventService = {
         name: input.name.trim(),
         date: input.date,
         location: input.location?.trim() || null,
+        start_time: input.start_time || null,
         alumni_price_cents: input.alumni_price_cents,
         other_price_cents: input.other_price_cents,
         currency: input.currency ?? 'EUR',
@@ -111,7 +113,7 @@ export const EventService = {
     return data as EventRow;
   },
 
-  /** Met à jour un événement (nom, date, lieu, prix, statut). */
+  /** Met à jour un événement (nom, date, heure, lieu, prix, statut). */
   async update(
     id: string,
     patch: Partial<
@@ -120,6 +122,7 @@ export const EventService = {
         | 'name'
         | 'description'
         | 'date'
+        | 'start_time'
         | 'location'
         | 'alumni_price_cents'
         | 'other_price_cents'

@@ -11,14 +11,12 @@ import {
   ParticipantType,
   PARTICIPANT_TYPE_LABELS,
 } from '@/types/enums';
-import { requiresSchool, getPaymentRequirement } from './participant.logic';
+import { requiresSchool } from './participant.logic';
 import { ParticipantService, type RegistrationResult } from './ParticipantService';
 import { SchoolService } from '@/features/schools/SchoolService';
 import { EventService, type ResolvedEvent } from '@/features/events/EventService';
-import { PaymentService } from '@/features/payments/PaymentService';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { AppError } from '@/lib/errors';
-import { formatMoney } from '@/lib/utils';
 import type { SchoolRow } from '@/types/database';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
@@ -26,17 +24,19 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 
-// Les diplômés de la promotion s'inscrivent en ALUMNI : proposés en premier.
+// Ordre d'affichage : diplômés, invités du CPBA, familles, étudiants.
 const TYPE_OPTIONS = [
   ParticipantType.ALUMNI,
-  ParticipantType.NEW_STUDENT,
+  ParticipantType.CPBA_GUEST,
   ParticipantType.OTHER,
+  ParticipantType.NEW_STUDENT,
 ] as const;
 
 const TYPE_HINTS: Record<ParticipantType, string> = {
-  NEW_STUDENT: 'Participation gratuite. Indiquez votre école.',
-  ALUMNI: "Participation gratuite. Indiquez l'école dont vous êtes diplômé(e).",
-  OTHER: 'Participation gratuite. Familles, amis et invités.',
+  ALUMNI: 'Promotion 2025-2026.',
+  CPBA_GUEST: 'Invité(e) personnellement par le CPBA.',
+  OTHER: 'Parents, proches et amis des diplômés.',
+  NEW_STUDENT: 'Venu(e) applaudir la promotion.',
 };
 
 export function RegistrationForm() {
@@ -126,13 +126,7 @@ export function RegistrationForm() {
               Suivez les instructions et confirmez votre paiement depuis votre
               espace ci-dessous.
             </p>
-          ) : (
-            <p>
-              Votre participation est <strong>gratuite</strong>. Aucune
-              validation n'est nécessaire : votre billet est déjà disponible
-              dans votre espace.
-            </p>
-          )}
+          ) : null}
           <Alert tone="warning">
             <strong>Conservez ce lien privé</strong> — c'est le seul accès à
             votre billet et au suivi de votre inscription :
@@ -164,14 +158,6 @@ export function RegistrationForm() {
   }
 
   const showSchool = selectedType && requiresSchool(selectedType);
-  // Le tarif de l'événement fait foi : 0 => participation gratuite.
-  const displayAmount =
-    selectedType && event
-      ? PaymentService.getDisplayAmountCents(selectedType, event)
-      : 0;
-  const paymentRequired = selectedType
-    ? getPaymentRequirement({ participant_type: selectedType }, displayAmount)
-    : false;
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
@@ -180,7 +166,7 @@ export function RegistrationForm() {
         <legend className="text-sm font-medium text-slate-800">
           Vous êtes : <span className="text-red-600" aria-hidden="true">*</span>
         </legend>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {TYPE_OPTIONS.map((type) => (
             <label
               key={type}
@@ -265,10 +251,10 @@ export function RegistrationForm() {
         </Field>
       </div>
 
-      {/* École — obligatoire pour les nouveaux étudiants et les anciens */}
+      {/* École — demandée uniquement aux étudiants */}
       {showSchool && (
         <Field
-          label={selectedType === ParticipantType.ALUMNI ? 'Ancienne école' : 'Votre école'}
+          label="Votre école"
           required
           error={errors.school_id?.message}
         >
@@ -281,7 +267,7 @@ export function RegistrationForm() {
               {...register('school_id')}
             >
               <option value="" disabled>
-                {selectedType === ParticipantType.ALUMNI ? 'Sélectionnez votre ancienne école' : 'Sélectionnez votre école'}
+                Sélectionnez votre école
               </option>
               {schools.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -292,30 +278,6 @@ export function RegistrationForm() {
             </Select>
           )}
         </Field>
-      )}
-
-      {/* Rappel métier du paiement (indicatif, non fiable côté client) */}
-      {selectedType && (
-        <Alert tone={paymentRequired ? 'info' : 'success'}>
-          {paymentRequired ? (
-            <span>
-              Participation payante
-              {event && displayAmount > 0 && (
-                <>
-                  {' '}— montant indicatif{' '}
-                  <strong>{formatMoney(displayAmount, event.currency)}</strong>
-                </>
-              )}
-              . Le paiement (Wero) sera disponible prochainement ; le montant
-              exact sera confirmé lors du paiement.
-            </span>
-          ) : (
-            <span>
-              Participation <strong>gratuite</strong> — votre billet est émis
-              dès la validation du formulaire.
-            </span>
-          )}
-        </Alert>
       )}
 
       {submitError && <Alert tone="error">{submitError}</Alert>}

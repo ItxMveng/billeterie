@@ -34,9 +34,10 @@ describe('getPaymentRequirement (piloté par le tarif)', () => {
 });
 
 describe('requiresSchool', () => {
-  it("l'école est obligatoire pour NEW_STUDENT et ALUMNI, pas pour OTHER", () => {
+  it("l'école n'est obligatoire que pour NEW_STUDENT", () => {
     expect(requiresSchool(ParticipantType.NEW_STUDENT)).toBe(true);
-    expect(requiresSchool(ParticipantType.ALUMNI)).toBe(true);
+    expect(requiresSchool(ParticipantType.ALUMNI)).toBe(false);
+    expect(requiresSchool(ParticipantType.CPBA_GUEST)).toBe(false);
     expect(requiresSchool(ParticipantType.OTHER)).toBe(false);
   });
 });

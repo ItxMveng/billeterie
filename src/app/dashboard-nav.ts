@@ -5,7 +5,6 @@ import {
   UploadCloud,
   School,
   CalendarDays,
-  CreditCard,
   Ticket,
   ScanLine,
   ShieldCheck,
@@ -77,12 +76,8 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     icon: CalendarDays,
     permission: 'events:read',
   },
-  {
-    to: '/dashboard/paiements',
-    label: 'Paiements',
-    icon: CreditCard,
-    permission: 'payments:read',
-  },
+  // Paiements retirés du menu : la participation n'est pas tarifée. La page
+  // reste accessible par son adresse (/dashboard/paiements) si besoin.
   {
     to: '/dashboard/billets',
     label: 'Billets',

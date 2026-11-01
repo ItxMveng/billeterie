@@ -8,10 +8,9 @@ export function RegisterPage() {
           Inscription à la remise des diplômes
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Renseignez vos informations. La participation est gratuite : votre
-          billet avec QR code est disponible dès la validation du formulaire.
-          Chaque personne présente (diplômé, proche, invité) a besoin de son
-          propre billet.
+          Renseignez vos informations : votre billet avec QR code est
+          disponible dès la validation du formulaire. Chaque personne présente
+          (diplômé, invité, proche, étudiant) a besoin de son propre billet.
         </p>
       </header>
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">

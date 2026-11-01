@@ -78,11 +78,10 @@ export function requiresVerification(type: ParticipantType): boolean {
 /**
  * Un établissement est-il obligatoire ?
  * - NEW_STUDENT : oui — l'école dans laquelle il étudie.
- * - ALUMNI      : oui — son ancienne école.
- * - OTHER       : non.
+ * - ALUMNI, CPBA_GUEST, OTHER : non (diplômés, invités, familles).
  */
 export function requiresSchool(type: ParticipantType): boolean {
-  return type === ParticipantType.NEW_STUDENT || type === ParticipantType.ALUMNI;
+  return type === ParticipantType.NEW_STUDENT;
 }
 
 /**

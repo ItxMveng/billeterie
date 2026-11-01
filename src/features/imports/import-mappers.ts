@@ -30,7 +30,11 @@ export function parseParticipantType(raw: string): ParticipantType | null {
     return ParticipantType.NEW_STUDENT;
   if (['alumni', 'ancien', 'ancien_etudiant', 'ancien étudiant'].includes(v))
     return ParticipantType.ALUMNI;
-  if (['other', 'autre', 'invite', 'invité', 'guest'].includes(v))
+  if (['cpba_guest', 'invite_cpba', 'invité cpba', 'invité du cpba', 'vip'].includes(v))
+    return ParticipantType.CPBA_GUEST;
+  if (['diplome', 'diplômé', 'diplômée'].includes(v))
+    return ParticipantType.ALUMNI;
+  if (['other', 'autre', 'invite', 'invité', 'guest', 'famille'].includes(v))
     return ParticipantType.OTHER;
   return null;
 }

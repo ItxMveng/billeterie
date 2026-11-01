@@ -4,14 +4,13 @@ import {
   UserPlus,
   GraduationCap,
   UserRound,
-  CreditCard,
   BadgeCheck,
   Ticket,
   ScanLine,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAsync } from '@/hooks/useAsync';
-import { StatsService } from '@/features/stats/StatsService';
+import { StatsService, cpbaGuests } from '@/features/stats/StatsService';
 import { ROLE_LABELS } from '@/types/enums';
 import { StatTile } from '@/components/ui/StatTile';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -38,12 +37,11 @@ export function DashboardHome() {
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile label="Inscrits" value={data.participants_total} icon={Users} />
-            <StatTile label="Nouveaux étudiants" value={data.new_students} icon={UserPlus} />
-            <StatTile label="Anciens" value={data.alumni} icon={GraduationCap} tone="slate" />
-            <StatTile label="Autres / Invités" value={data.others} icon={UserRound} tone="slate" />
+            <StatTile label="Diplômés" value={data.alumni} icon={GraduationCap} />
+            <StatTile label="Invités du CPBA" value={cpbaGuests(data)} icon={UserRound} tone="slate" />
+            <StatTile label="Familles" value={data.others} icon={UserRound} tone="slate" />
+            <StatTile label="Étudiants" value={data.new_students} icon={UserPlus} tone="slate" />
             <StatTile label="Vérifications en attente" value={data.verification_pending} icon={BadgeCheck} tone="amber" />
-            <StatTile label="Paiements en attente" value={data.payment_pending} icon={CreditCard} tone="amber" />
-            <StatTile label="Paiements confirmés" value={data.payment_paid} icon={CreditCard} tone="green" />
             <StatTile label="Tickets générés" value={data.tickets_generated} icon={Ticket} tone="green" />
             <StatTile label="Tickets non générés" value={data.tickets_not_generated} icon={Ticket} tone="slate" />
             <StatTile label="Check-in effectués" value={data.checked_in} icon={ScanLine} tone="green" />
