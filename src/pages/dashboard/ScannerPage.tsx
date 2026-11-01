@@ -189,6 +189,9 @@ export function ScannerPage() {
             {result?.ticket_number && (
               <p className="font-mono text-sm opacity-90">{result.ticket_number}</p>
             )}
+            {result?.result === 'WRONG_EVENT' && result.event_name && (
+              <p className="text-sm opacity-90">Billet valable pour : {result.event_name}</p>
+            )}
             {result?.result === 'ALREADY_USED' && result.first_checkin_at && (
               <p className="text-xs opacity-90">
                 1er passage : {new Date(result.first_checkin_at).toLocaleString('fr-FR')}

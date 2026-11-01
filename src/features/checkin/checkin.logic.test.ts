@@ -31,7 +31,7 @@ describe('presentCheckin', () => {
     expect(p.tone).toBe('warning');
   });
   it('CANCELLED / PAYMENT_UNPAID / INVALID refusent (error)', () => {
-    for (const r of ['CANCELLED', 'PAYMENT_UNPAID', 'INVALID'] as const) {
+    for (const r of ['CANCELLED', 'PAYMENT_UNPAID', 'INVALID', 'WRONG_EVENT'] as const) {
       const p = presentCheckin(r);
       expect(p.allowEntry).toBe(false);
       expect(p.tone).toBe('error');

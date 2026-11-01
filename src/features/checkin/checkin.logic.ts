@@ -12,6 +12,7 @@ export type CheckinResult =
   | 'CANCELLED'
   | 'PAYMENT_UNPAID'
   | 'NOT_ELIGIBLE'
+  | 'WRONG_EVENT'
   | 'NO_TICKET'
   | 'INVALID'
   | 'ERROR';
@@ -50,6 +51,7 @@ const PRESENTATION: Record<CheckinResult, CheckinPresentation> = {
   CANCELLED: { label: 'TICKET ANNULÉ', tone: 'error', allowEntry: false },
   PAYMENT_UNPAID: { label: 'PAIEMENT NON VALIDÉ', tone: 'error', allowEntry: false },
   NOT_ELIGIBLE: { label: 'NON ÉLIGIBLE', tone: 'error', allowEntry: false },
+  WRONG_EVENT: { label: 'BILLET D’UN AUTRE ÉVÉNEMENT', tone: 'error', allowEntry: false },
   NO_TICKET: { label: 'AUCUN TICKET', tone: 'error', allowEntry: false },
   INVALID: { label: 'TICKET INVALIDE', tone: 'error', allowEntry: false },
   ERROR: { label: 'ERREUR — RÉESSAYEZ', tone: 'error', allowEntry: false },

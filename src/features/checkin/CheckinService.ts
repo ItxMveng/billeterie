@@ -20,6 +20,8 @@ export interface CheckinResponse {
   checked_in_at?: string;
   first_checkin_at?: string;
   reason?: string;
+  /** Événement d'origine du billet (résultat WRONG_EVENT). */
+  event_name?: string | null;
 }
 
 export const CheckinService = {
