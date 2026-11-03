@@ -8,6 +8,7 @@ import {
   type ParticipantFilters,
 } from '@/features/participants/ParticipantService';
 import { SchoolService } from '@/features/schools/SchoolService';
+import { GRADUATES } from '@/config/graduates';
 import { ImportService } from '@/features/imports/ImportService';
 import { AppError } from '@/lib/errors';
 import {
@@ -309,6 +310,16 @@ export function ParticipantsPage() {
           <option value="yes">Entrés</option>
           <option value="no">Non entrés</option>
         </Select>
+        <Select
+          aria-label="Invités du diplômé"
+          value={filters.guest_of ?? ''}
+          onChange={(e) => setFilter('guest_of', e.target.value || undefined)}
+        >
+          <option value="">Invités de : tous</option>
+          {GRADUATES.map((name) => (
+            <option key={name} value={name}>Invités de {name}</option>
+          ))}
+        </Select>
       </div>
 
       {loading && <LoadingState label="Chargement…" />}
@@ -340,7 +351,14 @@ export function ParticipantsPage() {
                     </Link>
                     <div className="text-xs text-slate-400">{p.email}</div>
                   </td>
-                  <td className="px-4 py-3">{PARTICIPANT_TYPE_LABELS[p.participant_type]}</td>
+                  <td className="px-4 py-3">
+                    {PARTICIPANT_TYPE_LABELS[p.participant_type]}
+                    {p.guest_of && p.guest_of.length > 0 && (
+                      <div className="text-xs text-slate-400">
+                        Invité(e) de {p.guest_of.join(', ')}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge tone={verifTone(p.verification_status)}>
                       {VERIFICATION_STATUS_LABELS[p.verification_status]}

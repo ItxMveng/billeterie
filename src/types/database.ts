@@ -65,6 +65,8 @@ export interface ParticipantRow {
   source: string;
   /** Numéro étudiant officiel — facultatif, fiabilise la vérification. */
   external_identifier: string | null;
+  /** Diplômé(s) dont la personne est l'invitée (familles, plan de salle). */
+  guest_of?: string[] | null;
   checked_in: boolean;
   checked_in_at: string | null;
   created_at: string;

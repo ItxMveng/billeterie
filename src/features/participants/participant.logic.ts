@@ -85,6 +85,14 @@ export function requiresSchool(type: ParticipantType): boolean {
 }
 
 /**
+ * Faut-il indiquer de quel(s) diplômé(s) on est l'invité ? (plan de salle)
+ * - OTHER (familles / invités des diplômés) : oui.
+ */
+export function requiresGraduateHost(type: ParticipantType): boolean {
+  return type === ParticipantType.OTHER;
+}
+
+/**
  * Le participant est-il un NOUVEAU réellement VÉRIFIÉ ?
  * Un statut simplement DÉCLARÉ (PENDING) n'est jamais une preuve.
  */

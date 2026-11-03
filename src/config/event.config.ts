@@ -86,9 +86,11 @@ export const associationConfig = {
   name: 'Club-Pro Breizh Afriture',
   shortName: 'CPBA',
   shortDescription:
-    "Le Club-Pro Breizh Afriture accompagne l'arrivée et l'intégration des " +
-    'étudiants camerounais en Bretagne : entraide, rencontres et moments ' +
-    'de partage tout au long de l\'année.',
+    "Promoteur de l'accès à l'enseignement supérieur pour les jeunes " +
+    'étudiants africains méritants.',
   contactEmail: 'contact@cpba-community.org',
-  address: '31 rue de Vendée, 29200 Brest',
+  phone: '+33 7 81 70 34 93',
+  website: 'https://cpba-community.org',
+  // Siège de l'association (le lieu de la cérémonie vient de l'événement).
+  address: '176 ter boulevard de Coataudon, 29490 Guipavas, France',
 };

@@ -31,8 +31,8 @@ export function StatisticsPage() {
               <BarList
                 items={[
                   { label: 'Diplômés', value: overview.data.alumni },
-                  { label: 'Invités du CPBA', value: cpbaGuests(overview.data) },
-                  { label: 'Familles', value: overview.data.others },
+                  { label: 'Familles / invités des diplômés', value: overview.data.others },
+                  { label: 'Invités CPBA', value: cpbaGuests(overview.data) },
                   { label: 'Étudiants', value: overview.data.new_students },
                 ]}
               />

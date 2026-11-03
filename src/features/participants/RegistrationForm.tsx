@@ -11,7 +11,8 @@ import {
   ParticipantType,
   PARTICIPANT_TYPE_LABELS,
 } from '@/types/enums';
-import { requiresSchool } from './participant.logic';
+import { requiresSchool, requiresGraduateHost } from './participant.logic';
+import { GRADUATES } from '@/config/graduates';
 import { ParticipantService, type RegistrationResult } from './ParticipantService';
 import { SchoolService } from '@/features/schools/SchoolService';
 import { EventService, type ResolvedEvent } from '@/features/events/EventService';
@@ -24,18 +25,18 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 
-// Ordre d'affichage : diplômés, invités du CPBA, familles, étudiants.
+// Ordre d'affichage : diplômés, familles / invités des diplômés, invités CPBA, étudiants.
 const TYPE_OPTIONS = [
   ParticipantType.ALUMNI,
-  ParticipantType.CPBA_GUEST,
   ParticipantType.OTHER,
+  ParticipantType.CPBA_GUEST,
   ParticipantType.NEW_STUDENT,
 ] as const;
 
 const TYPE_HINTS: Record<ParticipantType, string> = {
   ALUMNI: 'Promotion 2025-2026.',
-  CPBA_GUEST: 'Invité(e) personnellement par le CPBA.',
-  OTHER: 'Parents, proches et amis des diplômés.',
+  OTHER: 'Parents, proches et amis invités par un diplômé.',
+  CPBA_GUEST: 'Invité(e) personnellement par CPBA.',
   NEW_STUDENT: 'Venu(e) applaudir la promotion.',
 };
 
@@ -59,6 +60,7 @@ export function RegistrationForm() {
       email: '',
       phone: '',
       school_id: undefined,
+      guest_of: [],
     },
   });
 
@@ -158,6 +160,7 @@ export function RegistrationForm() {
   }
 
   const showSchool = selectedType && requiresSchool(selectedType);
+  const showGraduates = selectedType && requiresGraduateHost(selectedType);
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
@@ -193,6 +196,41 @@ export function RegistrationForm() {
           </p>
         )}
       </fieldset>
+
+      {/* Familles / invités des diplômés : de qui êtes-vous l'invité ? */}
+      {showGraduates && (
+        <fieldset className="space-y-3 rounded-lg border border-brand-200 bg-brand-50/50 p-4">
+          <legend className="px-1 text-sm font-medium text-slate-800">
+            Vous êtes l'invité(e) de :{' '}
+            <span className="text-red-600" aria-hidden="true">*</span>
+          </legend>
+          <p className="text-xs text-slate-500">
+            Plusieurs choix possibles. Cela nous aide à vous placer près de
+            votre diplômé.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {GRADUATES.map((name) => (
+              <label
+                key={name}
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white p-2.5 text-sm text-slate-900 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-400"
+              >
+                <input
+                  type="checkbox"
+                  value={name}
+                  className="h-4 w-4 accent-brand-700"
+                  {...register('guest_of')}
+                />
+                {name}
+              </label>
+            ))}
+          </div>
+          {errors.guest_of && (
+            <p role="alert" className="text-sm text-red-600">
+              {errors.guest_of.message}
+            </p>
+          )}
+        </fieldset>
+      )}
 
       {/* Étape 2 : informations */}
       <div className="grid gap-4 sm:grid-cols-2">

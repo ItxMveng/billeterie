@@ -38,8 +38,8 @@ export function DashboardHome() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile label="Inscrits" value={data.participants_total} icon={Users} />
             <StatTile label="Diplômés" value={data.alumni} icon={GraduationCap} />
-            <StatTile label="Invités du CPBA" value={cpbaGuests(data)} icon={UserRound} tone="slate" />
-            <StatTile label="Familles" value={data.others} icon={UserRound} tone="slate" />
+            <StatTile label="Familles / invités des diplômés" value={data.others} icon={UserRound} tone="slate" />
+            <StatTile label="Invités CPBA" value={cpbaGuests(data)} icon={UserRound} tone="slate" />
             <StatTile label="Étudiants" value={data.new_students} icon={UserPlus} tone="slate" />
             <StatTile label="Vérifications en attente" value={data.verification_pending} icon={BadgeCheck} tone="amber" />
             <StatTile label="Tickets générés" value={data.tickets_generated} icon={Ticket} tone="green" />

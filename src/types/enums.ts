@@ -152,8 +152,8 @@ export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 export const PARTICIPANT_TYPE_LABELS: Record<ParticipantType, string> = {
   NEW_STUDENT: 'Étudiant(e)',
   ALUMNI: 'Diplômé(e)',
-  CPBA_GUEST: 'Invité(e) du CPBA',
-  OTHER: 'Famille',
+  CPBA_GUEST: 'Invité(e) CPBA',
+  OTHER: 'Famille / Invité(e) des diplômés',
 };
 
 export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {

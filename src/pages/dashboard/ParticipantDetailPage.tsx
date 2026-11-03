@@ -186,6 +186,9 @@ export function ParticipantDetailPage() {
               ) : (
               <CardContent className="space-y-2 text-sm">
                 <Row label="Catégorie" value={PARTICIPANT_TYPE_LABELS[data.participant.participant_type]} />
+                {data.participant.guest_of && data.participant.guest_of.length > 0 && (
+                  <Row label="Invité(e) de" value={data.participant.guest_of.join(', ')} />
+                )}
                 <Row label="Inscription" value={REGISTRATION_STATUS_LABELS[data.participant.registration_status]} />
                 <Row label="Vérification" value={VERIFICATION_STATUS_LABELS[data.participant.verification_status]} />
                 <Row label="Paiement requis" value={

@@ -16,6 +16,7 @@ import type {
   CheckinRow,
 } from '@/types/database';
 import type { RegistrationValues } from '@/schemas/participant.schema';
+import { requiresGraduateHost } from './participant.logic';
 import {
   ParticipantType,
   VerificationStatus,
@@ -31,6 +32,8 @@ export interface ParticipantFilters {
   ticket_status?: TicketStatus;
   checked_in?: boolean;
   school_id?: string;
+  /** Invités d'un diplômé donné (plan de salle). */
+  guest_of?: string;
 }
 
 export interface ParticipantDetail {
@@ -73,6 +76,7 @@ export const ParticipantService = {
         participant_type: values.participant_type,
         school_id: values.school_id ?? null,
         external_identifier: values.external_identifier || null,
+        guest_of: requiresGraduateHost(values.participant_type) ? values.guest_of ?? [] : [],
       },
     });
     if (error) {
@@ -123,6 +127,7 @@ export const ParticipantService = {
     if (filters.ticket_status) query = query.eq('ticket_status', filters.ticket_status);
     if (typeof filters.checked_in === 'boolean') query = query.eq('checked_in', filters.checked_in);
     if (filters.school_id) query = query.eq('school_id', filters.school_id);
+    if (filters.guest_of) query = query.contains('guest_of', [filters.guest_of]);
 
     if (filters.q && filters.q.trim()) {
       // Nettoyage : retire les caractères qui casseraient le filtre `.or()`.

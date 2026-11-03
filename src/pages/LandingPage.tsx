@@ -38,7 +38,7 @@ const PILIERS = [
 // Déroulé de la soirée : l'heure de début vient de l'événement (base).
 const PROGRAMME = [
   { title: 'Accueil des invités', text: 'Installation des diplômés et de leurs proches.' },
-  { title: "Mot d'ouverture", text: 'Discours du bureau du CPBA.' },
+  { title: "Mot d'ouverture", text: 'Discours du bureau CPBA.' },
   { title: 'Témoignages', text: 'Des diplômés racontent leur parcours.' },
   { title: 'Remise des diplômes', text: 'Chaque diplômé est appelé sur scène.' },
   { title: 'Photo de promotion', text: 'Photo officielle, puis photos avec les proches.' },
@@ -48,8 +48,8 @@ const PROGRAMME = [
 /** Qui peut s'inscrire — même ordre que le formulaire d'inscription. */
 const CATEGORIES = [
   { icon: GraduationCap, label: 'Diplômés', text: `Promotion ${PROMOTION}.` },
-  { icon: Award, label: 'Invités du CPBA', text: 'Personnalités et partenaires conviés par l’association.' },
-  { icon: HeartHandshake, label: 'Familles', text: 'Parents, proches et amis des diplômés.' },
+  { icon: HeartHandshake, label: 'Familles / Invités des diplômés', text: 'Parents, proches et amis invités par un diplômé.' },
+  { icon: Award, label: 'Invités CPBA', text: 'Personnalités et partenaires conviés par CPBA.' },
   { icon: Users, label: 'Étudiants', text: 'Venus applaudir la promotion.' },
 ];
 
@@ -65,11 +65,11 @@ const RAISONS = [
 const FAQ = [
   {
     q: 'Qui peut participer à la cérémonie ?',
-    a: `Les diplômés de la promotion ${PROMOTION}, les invités du CPBA, les familles et proches des diplômés, ainsi que les étudiants.`,
+    a: `Les diplômés de la promotion ${PROMOTION}, les familles et invités des diplômés, les invités CPBA, ainsi que les étudiants.`,
   },
   {
     q: 'Je suis diplômé(e), dois-je aussi inscrire mes proches ?',
-    a: 'Oui : chaque personne présente a besoin de son propre billet. Vos proches s’inscrivent dans la catégorie « Famille ».',
+    a: 'Oui : chaque personne présente a besoin de son propre billet. Vos proches s’inscrivent dans la catégorie « Famille / Invité(e) des diplômés » et indiquent votre nom.',
   },
   {
     q: 'Comment obtiendrai-je mon billet ?',
@@ -81,7 +81,7 @@ const FAQ = [
   },
   {
     q: "J'ai perdu mon lien d'accès, que faire ?",
-    a: "Contactez l'association avec l'adresse email utilisée lors de l'inscription. Par sécurité, le lien ne peut pas être retrouvé publiquement.",
+    a: "Écrivez-nous depuis l'adresse email utilisée lors de l'inscription. Par sécurité, le lien ne peut pas être retrouvé publiquement.",
   },
 ];
 
@@ -103,7 +103,7 @@ export function LandingPage() {
         <div className="absolute inset-0 -z-20">
           <SmartImage
             src="/images/hero.jpg"
-            alt="Membres du CPBA et invités réunis autour des drapeaux du Cameroun et de la France"
+            alt="Membres CPBA et invités réunis autour des drapeaux du Cameroun et de la France"
             caption="Ajoutez public/images/hero.jpg"
             tone="mixed"
             className="h-full w-full"
@@ -147,7 +147,7 @@ export function LandingPage() {
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <CtaPrimary to="/inscription">S'inscrire</CtaPrimary>
-              <CtaGhost to="#a-propos">En savoir plus</CtaGhost>
+              <CtaGhost to="#ceremonie">En savoir plus</CtaGhost>
             </div>
           </div>
 
@@ -165,7 +165,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══════════════════════ À PROPOS ═══════════════════════ */}
-      <section id="a-propos" className="scroll-mt-20 bg-cream py-20 lg:py-28">
+      <section id="ceremonie" className="scroll-mt-20 bg-cream py-20 lg:py-28">
         <div className="container grid items-center gap-14 lg:grid-cols-2">
           <div>
             <Eyebrow>Une soirée de fierté</Eyebrow>
@@ -186,7 +186,7 @@ export function LandingPage() {
             <div className="rotate-2 rounded-3xl bg-white p-3 shadow-lift transition-transform duration-300 motion-safe:hover:rotate-0">
               <SmartImage
                 src="/images/village.jpg"
-                alt="Étudiants du CPBA en tenues traditionnelles camerounaises"
+                alt="Étudiants CPBA en tenues traditionnelles camerounaises"
                 caption="public/images/village.jpg"
                 tone="navy"
                 className="aspect-[4/3] rounded-2xl"
@@ -320,7 +320,7 @@ export function LandingPage() {
             <div className="-rotate-2 overflow-hidden rounded-4xl shadow-lift transition-transform duration-300 motion-safe:hover:rotate-0">
               <SmartImage
                 src="/images/groupe.jpg"
-                alt="Membres du CPBA réunis à l'ENIB"
+                alt="Membres CPBA réunis à l'ENIB"
                 caption="public/images/groupe.jpg"
                 tone="mixed"
                 className="aspect-[4/3]"
@@ -365,14 +365,14 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════ L'ASSOCIATION ═══════════════════════ */}
-      <section className="bg-navy-50 py-20 lg:py-24">
+      {/* ═══════════════════════ À PROPOS : CPBA ═══════════════════════ */}
+      <section id="a-propos" className="scroll-mt-20 bg-navy-50 py-20 lg:py-24">
         <div className="container grid items-center gap-14 lg:grid-cols-[1.1fr_1fr]">
           <div className="relative">
             <div className="overflow-hidden rounded-4xl shadow-lift">
               <SmartImage
                 src="/images/association.jpg"
-                alt="Membres de l'association réunis"
+                alt="Membres CPBA réunis"
                 caption="public/images/association.jpg"
                 tone="navy"
                 className="aspect-[16/10]"
@@ -385,20 +385,32 @@ export function LandingPage() {
           </div>
 
           <div>
-            <Eyebrow>Qui sommes-nous</Eyebrow>
+            <Eyebrow>À propos</Eyebrow>
             <div className="mt-5 flex items-center gap-4">
               <BrandLogo size={64} rounded="rounded-2xl" className="shadow-soft" />
-              <h2 className="font-display text-3xl font-bold leading-tight text-navy-900 sm:text-4xl">
-                {associationConfig.name}
-              </h2>
+              <div>
+                <h2 className="font-display text-4xl font-bold leading-none text-navy-900">
+                  {associationConfig.shortName}
+                </h2>
+                <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-brand-600">
+                  {associationConfig.name}
+                </p>
+              </div>
             </div>
-            <p className="mt-5 leading-relaxed text-navy-700">
-              {associationConfig.shortDescription}
+            <p className="mt-6 leading-relaxed text-navy-700">
+              C'est avant tout un réseau professionnel qui rassemble des
+              personnes de divers horizons autour d'une vision commune du
+              développement : mettre en commun les ressources de chacun pour
+              permettre à tous de rayonner ensemble.
+            </p>
+            <p className="mt-4 leading-relaxed text-navy-700">
+              CPBA incarne l'espoir et l'opportunité pour de nombreux étudiants
+              talentueux, en Afrique comme en France.
             </p>
             <p className="mt-4 leading-relaxed text-navy-600">
-              Tout au long de l'année, nous organisons des rencontres, des
-              moments festifs et des temps d'entraide pour accompagner chacun,
-              de son arrivée jusqu'à son diplôme.
+              Grâce à des partenariats solides entre des écoles d'Afrique et de
+              France, nous ouvrons les portes de l'éducation, de la croissance
+              personnelle et de la réussite professionnelle.
             </p>
             <p className="mt-6">
               <span className="handwritten text-2xl text-brand-600">

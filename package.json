@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Plateforme de billetterie et de gestion des événements du CPBA (Club-Pro Breizh Afriture).",
+  "description": "Plateforme de billetterie et de gestion des événements CPBA (Club-Pro Breizh Afriture).",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

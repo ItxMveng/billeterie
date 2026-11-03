@@ -15,7 +15,7 @@ export default defineConfig({
         name: 'Remise des diplômes — Billetterie CPBA',
         short_name: 'Billetterie',
         description:
-          'Inscription et billetterie de la remise des diplômes de la promotion 2025-2026 du CPBA.',
+          'Inscription et billetterie de la remise des diplômes de la promotion 2025-2026 — CPBA.',
         theme_color: '#0f766e',
         background_color: '#ffffff',
         display: 'standalone',

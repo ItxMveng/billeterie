@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getPaymentRequirement,
   requiresSchool,
+  requiresGraduateHost,
   requiresVerification,
   isVerifiedNewStudent,
   deriveInitialStatuses,
@@ -39,6 +40,13 @@ describe('requiresSchool', () => {
     expect(requiresSchool(ParticipantType.ALUMNI)).toBe(false);
     expect(requiresSchool(ParticipantType.CPBA_GUEST)).toBe(false);
     expect(requiresSchool(ParticipantType.OTHER)).toBe(false);
+  });
+
+  it('requiresGraduateHost : seules les familles / invités des diplômés', () => {
+    expect(requiresGraduateHost(ParticipantType.OTHER)).toBe(true);
+    expect(requiresGraduateHost(ParticipantType.ALUMNI)).toBe(false);
+    expect(requiresGraduateHost(ParticipantType.CPBA_GUEST)).toBe(false);
+    expect(requiresGraduateHost(ParticipantType.NEW_STUDENT)).toBe(false);
   });
 });
 

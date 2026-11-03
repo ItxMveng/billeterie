@@ -90,6 +90,7 @@ export function ExportsPage() {
         { key: 'email', header: 'Email' },
         { key: 'phone', header: 'Téléphone' },
         { key: 'participant_type', header: 'Catégorie', format: (r) => PARTICIPANT_TYPE_LABELS[r.participant_type] },
+        { key: 'guest_of', header: 'Invité(e) de', format: (r) => (r.guest_of ?? []).join(', ') },
         { key: 'school', header: 'École', format: (r) => (r.school_id ? ctx.schoolById.get(r.school_id) ?? '' : '') },
         { key: 'external_identifier', header: 'N° étudiant' },
         { key: 'registration_status', header: 'Inscription', format: (r) => REGISTRATION_STATUS_LABELS[r.registration_status] },

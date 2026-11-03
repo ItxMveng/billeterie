@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Menu, X, Ticket, MapPin, Mail } from 'lucide-react';
+import { Menu, X, Ticket, MapPin, Mail, Phone, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { associationConfig } from '@/config/event.config';
 import { BrandLogo } from '@/components/ui/BrandLogo';
@@ -158,7 +158,20 @@ export function PublicLayout() {
         <div className="container relative py-14">
           <div className="grid gap-10 md:grid-cols-3">
             <div>
-              <Logo light />
+              <Link
+                to="/"
+                className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
+              >
+                <BrandLogo size={48} rounded="rounded-xl" />
+                <span className="leading-none">
+                  <span className="block font-display text-2xl font-extrabold text-white">
+                    {associationConfig.shortName}
+                  </span>
+                  <span className="mt-1 block text-[11px] font-semibold uppercase tracking-wider text-navy-200">
+                    {associationConfig.name}
+                  </span>
+                </span>
+              </Link>
               <p className="mt-4 max-w-xs text-sm leading-relaxed">
                 {associationConfig.shortDescription}
               </p>
@@ -195,8 +208,13 @@ export function PublicLayout() {
               </h2>
               <address className="mt-4 space-y-3 text-sm not-italic">
                 <p className="flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
-                  <span>{associationConfig.address}</span>
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+                  <a
+                    href={associationConfig.website}
+                    className="transition-colors hover:text-brand-300"
+                  >
+                    {associationConfig.website.replace(/^https?:\/\//, '')}
+                  </a>
                 </p>
                 <p className="flex items-start gap-2">
                   <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
@@ -206,6 +224,19 @@ export function PublicLayout() {
                   >
                     {associationConfig.contactEmail}
                   </a>
+                </p>
+                <p className="flex items-start gap-2">
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+                  <a
+                    href={`tel:${associationConfig.phone.replace(/\s/g, '')}`}
+                    className="transition-colors hover:text-brand-300"
+                  >
+                    {associationConfig.phone}
+                  </a>
+                </p>
+                <p className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+                  <span>{associationConfig.address}</span>
                 </p>
               </address>
             </div>
