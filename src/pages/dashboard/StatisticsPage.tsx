@@ -1,4 +1,9 @@
+import { useMemo } from 'react';
 import { useAsync } from '@/hooks/useAsync';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
+import { ParticipantService } from '@/features/participants/ParticipantService';
+import { buildSeatingPlan } from '@/features/seating/seating';
+import { GRADUATES } from '@/config/graduates';
 import { StatsService, cpbaGuests } from '@/features/stats/StatsService';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -6,15 +11,38 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { BarList } from '@/components/ui/BarList';
 
 export function StatisticsPage() {
-  const overview = useAsync(() => StatsService.getOverview(), []);
-  const series = useAsync(() => StatsService.getTimeSeries(30), []);
+  const { eventId } = useDashboardEvent();
+  const overview = useAsync(
+    () => (eventId ? StatsService.getOverview(eventId) : Promise.resolve(null)),
+    [eventId],
+  );
+  const series = useAsync(
+    () => (eventId ? StatsService.getTimeSeries(eventId, 30) : Promise.resolve(null)),
+    [eventId],
+  );
+  const participants = useAsync(
+    () => (eventId ? ParticipantService.list(eventId) : Promise.resolve(null)),
+    [eventId],
+  );
+  const guestsByGraduate = useMemo(() => {
+    if (!participants.data) return [];
+    const plan = buildSeatingPlan(participants.data, GRADUATES);
+    return [
+      ...plan.groups
+        .map((g) => ({ label: g.graduate, value: g.guests.length }))
+        .sort((a, b) => b.value - a.value),
+      ...(plan.unassignedFamilies.length > 0
+        ? [{ label: 'Sans diplômé indiqué', value: plan.unassignedFamilies.length }]
+        : []),
+    ];
+  }, [participants.data]);
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Statistiques</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Données réelles agrégées côté serveur.
+          Chiffres de l'événement sélectionné uniquement.
         </p>
       </header>
 
@@ -40,7 +68,14 @@ export function StatisticsPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Répartition par école</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Familles / invités par diplômé</CardTitle></CardHeader>
+            <CardContent>
+              <BarList items={guestsByGraduate} emptyLabel="Aucun invité pour l'instant" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Répartition par école (étudiants)</CardTitle></CardHeader>
             <CardContent>
               <BarList
                 items={overview.data.by_school.map((s) => ({ label: s.school, value: s.count }))}

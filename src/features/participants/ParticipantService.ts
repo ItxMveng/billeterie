@@ -25,6 +25,8 @@ import {
 } from '@/types/enums';
 
 export interface ParticipantFilters {
+  /** Événement concerné : les données ne se mélangent jamais entre événements. */
+  event_id?: string;
   q?: string;
   participant_type?: ParticipantType;
   verification_status?: VerificationStatus;
@@ -98,13 +100,12 @@ export const ParticipantService = {
     };
   },
 
-  /** Liste des participants (admin uniquement — protégé par la RLS). */
-  async list(): Promise<ParticipantRow[]> {
+  /** Participants d'un événement (admin uniquement — protégé par la RLS). */
+  async list(eventId?: string | null): Promise<ParticipantRow[]> {
     const supabase = requireSupabase();
-    const { data, error } = await supabase
-      .from('participants')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabase.from('participants').select('*');
+    if (eventId) query = query.eq('event_id', eventId);
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) {
       const appError = toAppError(error);
       logger.reportError(appError, { scope: 'ParticipantService.list' });
@@ -121,6 +122,7 @@ export const ParticipantService = {
     const supabase = requireSupabase();
     let query = supabase.from('participants').select('*');
 
+    if (filters.event_id) query = query.eq('event_id', filters.event_id);
     if (filters.participant_type) query = query.eq('participant_type', filters.participant_type);
     if (filters.verification_status) query = query.eq('verification_status', filters.verification_status);
     if (filters.payment_status) query = query.eq('payment_status', filters.payment_status);
@@ -194,6 +196,8 @@ export const ParticipantService = {
       phone: string;
       school_id?: string | null;
       external_identifier?: string | null;
+      /** Diplômé(s) hôte(s) ; undefined = inchangé. */
+      guest_of?: string[];
     },
   ): Promise<void> {
     const supabase = requireSupabase();
@@ -205,6 +209,7 @@ export const ParticipantService = {
       p_phone: input.phone,
       p_school_id: input.school_id ?? null,
       p_external_identifier: input.external_identifier ?? null,
+      p_guest_of: input.guest_of ?? null,
     });
     if (error) {
       const appError = toAppError(error);
@@ -227,11 +232,11 @@ export const ParticipantService = {
   },
 
   /** Nouveaux étudiants en attente de vérification (file admin). */
-  async listPendingVerification(): Promise<ParticipantRow[]> {
+  async listPendingVerification(eventId?: string | null): Promise<ParticipantRow[]> {
     const supabase = requireSupabase();
-    const { data, error } = await supabase
-      .from('participants')
-      .select('*')
+    let query = supabase.from('participants').select('*');
+    if (eventId) query = query.eq('event_id', eventId);
+    const { data, error } = await query
       .eq('participant_type', ParticipantType.NEW_STUDENT)
       .eq('verification_status', VerificationStatus.PENDING)
       .order('created_at', { ascending: true });

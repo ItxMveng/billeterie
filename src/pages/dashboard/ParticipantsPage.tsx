@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, Trash2, Pencil, X } from 'lucide-react';
 import { useAsync } from '@/hooks/useAsync';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
 import { useAuth } from '@/features/auth/useAuth';
 import {
   ParticipantService,
@@ -60,9 +61,13 @@ export function ParticipantsPage() {
   const [filters, setFilters] = useState<ParticipantFilters>({});
   const [qInput, setQInput] = useState('');
 
+  const { eventId } = useDashboardEvent();
   const { data, loading, error, reload } = useAsync(
-    () => ParticipantService.search(filters),
-    [JSON.stringify(filters)],
+    () =>
+      eventId
+        ? ParticipantService.search({ ...filters, event_id: eventId })
+        : Promise.resolve([]),
+    [JSON.stringify(filters), eventId],
   );
   const schools = useAsync(() => SchoolService.listAll(), []);
 

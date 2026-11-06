@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Users,
+  Armchair,
   BadgeCheck,
   UploadCloud,
   School,
@@ -50,6 +51,12 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     to: '/dashboard/participants',
     label: 'Participants',
     icon: Users,
+    permission: 'participants:read',
+  },
+  {
+    to: '/dashboard/plan-de-salle',
+    label: 'Plan de salle',
+    icon: Armchair,
     permission: 'participants:read',
   },
   {

@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { PublicLayout } from '@/layouts/PublicLayout';
 import { FullPageLoader } from '@/components/common/FullPageLoader';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { DashboardEventProvider } from '@/features/events/DashboardEventContext';
 import { ProtectedRoute, RequirePermission } from '@/features/auth/ProtectedRoute';
 
 import { LandingPage } from '@/pages/LandingPage';
@@ -24,6 +25,7 @@ import { SchoolsPage } from '@/pages/dashboard/SchoolsPage';
 import { EventPage } from '@/pages/dashboard/EventPage';
 import { PaymentsPage } from '@/pages/dashboard/PaymentsPage';
 import { TicketsPage } from '@/pages/dashboard/TicketsPage';
+import { SeatingPlanPage } from '@/pages/dashboard/SeatingPlanPage';
 // Chargé à la demande : la librairie de scan QR est volumineuse et n'est
 // utile qu'aux agents de contrôle (réduit le bundle initial pour tous).
 const ScannerPage = lazy(() =>
@@ -47,7 +49,13 @@ export function AppRouter() {
 
       {/* Dashboard protégé (authentification + accès dashboard) */}
       <Route path="/dashboard" element={<ProtectedRoute permission="dashboard:access" />}>
-        <Route element={<DashboardLayout />}>
+        <Route
+          element={
+            <DashboardEventProvider>
+              <DashboardLayout />
+            </DashboardEventProvider>
+          }
+        >
           <Route index element={<DashboardHome />} />
           <Route
             path="statistiques"
@@ -70,6 +78,14 @@ export function AppRouter() {
             element={
               <RequirePermission permission="participants:read">
                 <ParticipantDetailPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="plan-de-salle"
+            element={
+              <RequirePermission permission="participants:read">
+                <SeatingPlanPage />
               </RequirePermission>
             }
           />

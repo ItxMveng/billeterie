@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
-import { LogOut, Menu, X } from 'lucide-react';
+import { CalendarDays, LogOut, Menu, X } from 'lucide-react';
 import { BrandLogo } from '@/components/ui/BrandLogo';
-import { cn } from '@/lib/utils';
+import { cn, formatDateShort } from '@/lib/utils';
 import { useAuth } from '@/features/auth/useAuth';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
 import { DASHBOARD_NAV } from '@/app/dashboard-nav';
-import { ROLE_LABELS } from '@/types/enums';
+import { EVENT_STATUS_LABELS, EventStatus, ROLE_LABELS } from '@/types/enums';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Select } from '@/components/ui/Select';
 
 export function DashboardLayout() {
   const { user, roles, can, signOut } = useAuth();
@@ -104,9 +106,61 @@ export function DashboardLayout() {
         )}
 
         <main className="min-w-0 flex-1 p-4 sm:p-6">
+          <EventSwitcher />
           <Outlet />
         </main>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Bandeau « Événement consulté » : rappelle sur chaque page à quel
+ * événement correspondent les données affichées, et permet d'en changer.
+ */
+function EventSwitcher() {
+  const { events, event, setEventId, loading } = useDashboardEvent();
+  if (loading || events.length === 0) return null;
+
+  const archived = event?.status === EventStatus.ARCHIVED;
+  return (
+    <div
+      className={cn(
+        'mb-6 flex flex-col gap-2 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between',
+        archived ? 'border-amber-200 bg-amber-50' : 'border-brand-200 bg-brand-50',
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <CalendarDays className="h-5 w-5 shrink-0 text-brand-700" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Données de l'événement
+          </p>
+          <p className="truncate font-semibold text-slate-900">
+            {event ? `${event.name} — ${formatDateShort(event.date)}` : '—'}
+          </p>
+        </div>
+        {event && (
+          <Badge tone={archived ? 'amber' : event.status === EventStatus.PUBLISHED ? 'green' : 'neutral'}>
+            {EVENT_STATUS_LABELS[event.status]}
+          </Badge>
+        )}
+      </div>
+      {events.length > 1 && (
+        <Select
+          aria-label="Changer d'événement"
+          className="sm:max-w-xs"
+          value={event?.id ?? ''}
+          onChange={(e) => setEventId(e.target.value)}
+        >
+          {[...events].reverse().map((ev) => (
+            <option key={ev.id} value={ev.id}>
+              {ev.name} — {formatDateShort(ev.date)}
+              {ev.status === EventStatus.ARCHIVED ? ' (archivé)' : ''}
+            </option>
+          ))}
+        </Select>
+      )}
     </div>
   );
 }

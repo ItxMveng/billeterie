@@ -13,6 +13,8 @@ export interface EventStats {
   new_students: number;
   alumni: number;
   others: number;
+  /** Absent tant que deploy/step17 n'est pas appliqué. */
+  cpba_guests?: number;
   verification_pending: number;
   payment_pending: number;
   payment_awaiting: number;
@@ -25,12 +27,9 @@ export interface EventStats {
   by_school: Array<{ school: string; count: number }>;
 }
 
-/**
- * Invités CPBA : catégorie ajoutée après la RPC de stats, qui ne la compte
- * pas à part. On la déduit du total moins les trois catégories historiques.
- */
+/** Invités CPBA (déduits du total si la base ne les compte pas encore). */
 export function cpbaGuests(s: EventStats): number {
-  return Math.max(0, s.participants_total - s.new_students - s.alumni - s.others);
+  return s.cpba_guests ?? Math.max(0, s.participants_total - s.new_students - s.alumni - s.others);
 }
 
 export interface TimeSeries {
@@ -39,9 +38,9 @@ export interface TimeSeries {
 }
 
 export const StatsService = {
-  async getOverview(): Promise<EventStats> {
+  async getOverview(eventId: string | null): Promise<EventStats> {
     const supabase = requireSupabase();
-    const { data, error } = await supabase.rpc('get_event_stats');
+    const { data, error } = await supabase.rpc('get_event_stats', { p_event_id: eventId });
     if (error) {
       const appError = toAppError(error);
       logger.reportError(appError, { scope: 'StatsService.getOverview' });
@@ -50,9 +49,12 @@ export const StatsService = {
     return data as EventStats;
   },
 
-  async getTimeSeries(days = 30): Promise<TimeSeries> {
+  async getTimeSeries(eventId: string | null, days = 30): Promise<TimeSeries> {
     const supabase = requireSupabase();
-    const { data, error } = await supabase.rpc('get_time_series', { p_days: days });
+    const { data, error } = await supabase.rpc('get_time_series', {
+      p_days: days,
+      p_event_id: eventId,
+    });
     if (error) {
       const appError = toAppError(error);
       logger.reportError(appError, { scope: 'StatsService.getTimeSeries' });

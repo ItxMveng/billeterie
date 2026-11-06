@@ -1,3 +1,5 @@
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
+import { GRADUATES } from '@/config/graduates';
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
@@ -48,7 +50,8 @@ export function ParticipantDetailPage() {
   const [linkBusy, setLinkBusy] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", school_id: "", external_identifier: "" });
+  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", school_id: "", external_identifier: "", guest_of: [] as string[] });
+  const { events } = useDashboardEvent();
 
   const run = async (fn: () => Promise<unknown>, okMessage = "Action effectuée.") => {
     setBusy(true);
@@ -100,6 +103,7 @@ export function ParticipantDetailPage() {
                         phone: p.phone,
                         school_id: p.school_id ?? '',
                         external_identifier: p.external_identifier ?? '',
+                        guest_of: p.guest_of ?? [],
                       });
                       setEditing(true);
                     }}
@@ -124,6 +128,7 @@ export function ParticipantDetailPage() {
                             phone: form.phone,
                             school_id: form.school_id || null,
                             external_identifier: form.external_identifier || null,
+                            ...(data.participant.participant_type === 'OTHER' ? { guest_of: form.guest_of } : {}),
                           }),
                         'Coordonnées mises à jour.',
                       ).then(() => setEditing(false));
@@ -173,6 +178,31 @@ export function ParticipantDetailPage() {
                           onChange={(e) => setForm({ ...form, external_identifier: e.target.value })} />
                       )}
                     </Field>
+                    {data.participant.participant_type === 'OTHER' && (
+                      <fieldset className="sm:col-span-2">
+                        <legend className="mb-2 text-sm font-medium text-slate-800">Invité(e) de</legend>
+                        <div className="grid gap-1.5 sm:grid-cols-2">
+                          {[...new Set([...GRADUATES, ...form.guest_of])].map((name) => (
+                            <label key={name} className="flex items-center gap-2 text-sm text-slate-700">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-brand-700"
+                                checked={form.guest_of.includes(name)}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    guest_of: e.target.checked
+                                      ? [...form.guest_of, name]
+                                      : form.guest_of.filter((g) => g !== name),
+                                  })
+                                }
+                              />
+                              {name}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                    )}
                     <div className="flex gap-2 sm:col-span-2">
                       <Button type="submit" size="sm" loading={busy}>
                         <Save className="h-4 w-4" aria-hidden="true" /> Enregistrer
@@ -185,6 +215,7 @@ export function ParticipantDetailPage() {
                 </CardContent>
               ) : (
               <CardContent className="space-y-2 text-sm">
+                <Row label="Événement" value={events.find((e) => e.id === data.participant.event_id)?.name ?? '—'} />
                 <Row label="Catégorie" value={PARTICIPANT_TYPE_LABELS[data.participant.participant_type]} />
                 {data.participant.guest_of && data.participant.guest_of.length > 0 && (
                   <Row label="Invité(e) de" value={data.participant.guest_of.join(', ')} />

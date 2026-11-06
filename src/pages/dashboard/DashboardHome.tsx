@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAsync } from '@/hooks/useAsync';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
 import { StatsService, cpbaGuests } from '@/features/stats/StatsService';
 import { ROLE_LABELS } from '@/types/enums';
 import { StatTile } from '@/components/ui/StatTile';
@@ -18,7 +19,11 @@ import { ErrorState } from '@/components/common/ErrorState';
 
 export function DashboardHome() {
   const { user, roles } = useAuth();
-  const { data, loading, error, reload } = useAsync(() => StatsService.getOverview(), []);
+  const { eventId } = useDashboardEvent();
+  const { data, loading, error, reload } = useAsync(
+    () => (eventId ? StatsService.getOverview(eventId) : Promise.resolve(null)),
+    [eventId],
+  );
 
   return (
     <div className="space-y-6">
@@ -50,6 +55,7 @@ export function DashboardHome() {
 
           <div className="flex flex-wrap gap-3">
             <QuickLink to="/dashboard/statistiques" label="Statistiques détaillées" />
+            <QuickLink to="/dashboard/plan-de-salle" label="Plan de salle" />
             <QuickLink to="/dashboard/participants" label="Gérer les participants" />
             <QuickLink to="/dashboard/scanner" label="Scanner" />
           </div>

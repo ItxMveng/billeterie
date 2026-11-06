@@ -108,6 +108,12 @@ export const EventStatus = {
 } as const;
 export type EventStatus = (typeof EventStatus)[keyof typeof EventStatus];
 
+export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
+  DRAFT: 'Brouillon',
+  PUBLISHED: 'En cours (publié)',
+  ARCHIVED: 'Archivé',
+};
+
 /**
  * Rôles RBAC. L'ordre traduit une hiérarchie de privilèges décroissante,
  * mais l'autorisation réelle repose sur des permissions explicites

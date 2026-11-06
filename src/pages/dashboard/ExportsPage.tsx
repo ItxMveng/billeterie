@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Download, Users, CreditCard, ScanLine, ClipboardList } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Download, Users, CreditCard, ScanLine, ClipboardList, Armchair } from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
 import { ParticipantService } from '@/features/participants/ParticipantService';
 import { PaymentService } from '@/features/payments/PaymentService';
 import { SchoolService } from '@/features/schools/SchoolService';
 import { TicketService } from '@/features/tickets/TicketService';
-import { EventService } from '@/features/events/EventService';
 import { toCsv, downloadCsv } from '@/lib/export-csv';
 import { AppError } from '@/lib/errors';
 import { formatDateTime, formatDateShort } from '@/lib/utils';
@@ -34,12 +35,11 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 const oui = (b: boolean | null | undefined) => (b ? 'Oui' : 'Non');
 
-/** Contexte partagé par tous les exports (écoles, billets, événement). */
-async function loadContext() {
-  const [schools, tickets, event] = await Promise.all([
+/** Contexte partagé par tous les exports (écoles, billets de l'événement). */
+async function loadContext(eventId: string) {
+  const [schools, tickets] = await Promise.all([
     SchoolService.listAll(),
-    TicketService.listAll(),
-    EventService.getActiveEvent(),
+    TicketService.listAll(eventId),
   ]);
   const schoolById = new Map(schools.map((s) => [s.id, s.short_name || s.name]));
   const ticketByParticipant = new Map(
@@ -47,7 +47,18 @@ async function loadContext() {
       .filter((t) => t.status !== 'CANCELLED')
       .map((t) => [t.participant_id, t.ticket_number]),
   );
-  return { schoolById, ticketByParticipant, event };
+  return { schoolById, ticketByParticipant };
+}
+
+/** « Remise des diplômes — Promotion 2025-2026 » → « remise-des-diplomes-promotion-2025-2026 ». */
+function slug(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50);
 }
 
 /** Horodatage compact pour les noms de fichiers : 2026-10-03_19-30. */
@@ -60,9 +71,13 @@ function stamp(): string {
 export function ExportsPage() {
   const { can } = useAuth();
   const toast = useToast();
+  const { event } = useDashboardEvent();
   const [busy, setBusy] = useState<string | null>(null);
 
   if (!can('exports:read')) return <ForbiddenState />;
+  if (!event) return null;
+  const eventId = event.id;
+  const fileName = (kind: string) => `${kind}_${slug(event.name)}_${stamp()}.csv`;
 
   const run = async (key: string, label: string, fn: () => Promise<number>) => {
     setBusy(key);
@@ -80,10 +95,11 @@ export function ExportsPage() {
   const exportParticipants = () =>
     run('participants', 'Participants', async () => {
       const [rows, ctx] = await Promise.all([
-        ParticipantService.search({}, 5000),
-        loadContext(),
+        ParticipantService.search({ event_id: eventId }, 5000),
+        loadContext(eventId),
       ]);
       const csv = toCsv<ParticipantRow>(rows, [
+        { key: 'event', header: 'Événement', format: () => event.name },
         { key: 'ticket', header: 'N° de billet', format: (r) => ctx.ticketByParticipant.get(r.id) ?? '' },
         { key: 'last_name', header: 'Nom', format: (r) => r.last_name.toUpperCase() },
         { key: 'first_name', header: 'Prénom' },
@@ -104,14 +120,15 @@ export function ExportsPage() {
         { key: 'source', header: 'Origine', format: (r) => SOURCE_LABELS[r.source] ?? r.source },
         { key: 'created_at', header: 'Inscrit le', format: (r) => formatDateTime(r.created_at) },
       ]);
-      downloadCsv(`participants_${stamp()}.csv`, csv);
+      downloadCsv(fileName('participants'), csv);
       return rows.length;
     });
 
   /* ── 2. Paiements ──────────────────────────────────────────────────── */
   const exportPayments = () =>
     run('payments', 'Paiements', async () => {
-      const [rows, ctx] = await Promise.all([PaymentService.listAll(), loadContext()]);
+      const [all, ctx] = await Promise.all([PaymentService.listAll(), loadContext(eventId)]);
+      const rows = all.filter((r) => r.event_id === eventId);
       const csv = toCsv<PaymentWithParticipant>(rows, [
         { key: 'reference', header: 'Référence' },
         { key: 'nom', header: 'Nom', format: (r) => r.participant?.last_name.toUpperCase() ?? '' },
@@ -128,7 +145,7 @@ export function ExportsPage() {
         { key: 'created_at', header: 'Créé le', format: (r) => formatDateTime(r.created_at) },
         { key: 'confirmed_at', header: 'Confirmé le', format: (r) => formatDateTime(r.confirmed_at) },
       ]);
-      downloadCsv(`paiements_${stamp()}.csv`, csv);
+      downloadCsv(fileName('paiements'), csv);
       return rows.length;
     });
 
@@ -136,8 +153,8 @@ export function ExportsPage() {
   const exportCheckins = () =>
     run('checkins', 'Entrées', async () => {
       const [rows, ctx] = await Promise.all([
-        ParticipantService.search({ checked_in: true }, 5000),
-        loadContext(),
+        ParticipantService.search({ event_id: eventId, checked_in: true }, 5000),
+        loadContext(eventId),
       ]);
       // Ordre chronologique d'arrivée.
       const sorted = [...rows].sort((a, b) =>
@@ -152,7 +169,7 @@ export function ExportsPage() {
         { key: 'school', header: 'École', format: (r) => (r.school_id ? ctx.schoolById.get(r.school_id) ?? '' : '') },
         { key: 'email', header: 'Email' },
       ]);
-      downloadCsv(`entrees_${stamp()}.csv`, csv);
+      downloadCsv(fileName('entrees'), csv);
       return sorted.length;
     });
 
@@ -160,8 +177,8 @@ export function ExportsPage() {
   const exportAttendance = () =>
     run('emargement', "Liste d'émargement", async () => {
       const [rows, ctx] = await Promise.all([
-        ParticipantService.search({}, 5000),
-        loadContext(),
+        ParticipantService.search({ event_id: eventId }, 5000),
+        loadContext(eventId),
       ]);
       // Uniquement les personnes réellement attendues, triées par nom.
       const attendus = rows
@@ -174,11 +191,11 @@ export function ExportsPage() {
         { key: 'last_name', header: 'Nom', format: (r) => r.last_name.toUpperCase() },
         { key: 'first_name', header: 'Prénom' },
         { key: 'participant_type', header: 'Catégorie', format: (r) => PARTICIPANT_TYPE_LABELS[r.participant_type] },
-        { key: 'school', header: 'École', format: (r) => (r.school_id ? ctx.schoolById.get(r.school_id) ?? '' : '') },
+        { key: 'guest_of', header: 'Invité(e) de', format: (r) => (r.guest_of ?? []).join(', ') },
         { key: 'ticket', header: 'N° de billet', format: (r) => ctx.ticketByParticipant.get(r.id) ?? '' },
         { key: 'signature', header: 'Signature', format: () => '' },
       ]);
-      downloadCsv(`emargement_${stamp()}.csv`, csv);
+      downloadCsv(fileName('emargement'), csv);
       return attendus.length;
     });
 
@@ -187,8 +204,10 @@ export function ExportsPage() {
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Exports</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Fichiers CSV encodés en UTF-8 avec BOM : ils s'ouvrent directement
-          dans Excel ou LibreOffice, accents compris. Aucune donnée technique
+          Tous les fichiers contiennent uniquement les données de
+          l'événement « {event.name} », et son nom figure dans le nom du
+          fichier. Format CSV : il s'ouvre directement dans Excel ou
+          LibreOffice, accents compris. Aucune donnée technique
           (jeton, empreinte, identifiant interne) n'est exportée.
         </p>
       </header>
@@ -197,11 +216,24 @@ export function ExportsPage() {
         <ExportCard
           icon={Users}
           title="Participants — export complet"
-          description="Identité, école, catégorie, statuts d'inscription, de vérification, de paiement, numéro de billet, entrée et origine de l'inscription."
+          description="Identité, catégorie, diplômé(s) hôte(s), école, statuts d'inscription, de vérification, de paiement, numéro de billet, entrée et origine de l'inscription."
         >
           <Button loading={busy === 'participants'} onClick={exportParticipants}>
             <Download className="h-4 w-4" aria-hidden="true" /> Exporter
           </Button>
+        </ExportCard>
+
+        <ExportCard
+          icon={Armchair}
+          title="Plan de salle"
+          description="Chaque diplômé suivi de ses familles et invités, puis les invités CPBA et les étudiants. Disponible depuis la page Plan de salle."
+        >
+          <Link
+            to="/dashboard/plan-de-salle"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-medium text-slate-800 hover:bg-slate-50"
+          >
+            Ouvrir le plan de salle
+          </Link>
         </ExportCard>
 
         <ExportCard

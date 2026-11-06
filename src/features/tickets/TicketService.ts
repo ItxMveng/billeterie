@@ -66,12 +66,11 @@ export const TicketService = {
   },
 
   /** Tous les billets émis (staff — pour les exports et le suivi). */
-  async listAll(): Promise<TicketRow[]> {
+  async listAll(eventId?: string | null): Promise<TicketRow[]> {
     const supabase = requireSupabase();
-    const { data, error } = await supabase
-      .from('tickets')
-      .select('*')
-      .order('issued_at', { ascending: true });
+    let query = supabase.from('tickets').select('*');
+    if (eventId) query = query.eq('event_id', eventId);
+    const { data, error } = await query.order('issued_at', { ascending: true });
     if (error) {
       const appError = toAppError(error);
       logger.reportError(appError, { scope: 'TicketService.listAll' });

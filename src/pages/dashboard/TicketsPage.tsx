@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
 import { useAuth } from '@/features/auth/useAuth';
 import { ParticipantService } from '@/features/participants/ParticipantService';
 import { TicketService } from '@/features/tickets/TicketService';
@@ -17,7 +18,11 @@ import { useToast } from '@/components/ui/useToast';
 export function TicketsPage() {
   const { can } = useAuth();
   const canWrite = can('tickets:write');
-  const { data, loading, error, reload } = useAsync(() => ParticipantService.list(), []);
+  const { eventId } = useDashboardEvent();
+  const { data, loading, error, reload } = useAsync(
+    () => (eventId ? ParticipantService.list(eventId) : Promise.resolve([])),
+    [eventId],
+  );
   const toast = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
 

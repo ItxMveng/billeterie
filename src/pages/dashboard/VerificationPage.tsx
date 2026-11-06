@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
+import { useDashboardEvent } from '@/features/events/DashboardEventContext';
 import { useAuth } from '@/features/auth/useAuth';
 import { ParticipantService } from '@/features/participants/ParticipantService';
 import { VerificationService } from '@/features/verification/VerificationService';
@@ -34,7 +35,11 @@ export function VerificationPage() {
   const { can } = useAuth();
   const canWrite = can('participants:write');
 
-  const pending = useAsync(() => ParticipantService.listPendingVerification(), []);
+  const { eventId } = useDashboardEvent();
+  const pending = useAsync(
+    () => (eventId ? ParticipantService.listPendingVerification(eventId) : Promise.resolve([])),
+    [eventId],
+  );
   const records = useAsync(() => VerificationService.listRecords(), []);
   const toast = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
