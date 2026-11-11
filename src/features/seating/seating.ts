@@ -6,6 +6,7 @@
 
 import { ParticipantType } from '@/types/enums';
 import type { ParticipantRow } from '@/types/database';
+import { canonicalGraduateName, graduateNameKey } from '@/config/graduates';
 
 export interface GraduateGroup {
   /** Nom du diplômé tel qu'il figure dans la liste. */
@@ -24,18 +25,6 @@ export interface SeatingPlan {
   otherGraduates: ParticipantRow[];
   cpbaGuests: ParticipantRow[];
   students: ParticipantRow[];
-}
-
-/** « Adelphe FOGANG » et « fogang  adelphe » donnent la même clé. */
-export function nameKey(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .split(/[\s-]+/)
-    .filter(Boolean)
-    .sort()
-    .join(' ');
 }
 
 export function byLastName(a: ParticipantRow, b: ParticipantRow): number {
@@ -59,20 +48,27 @@ export function buildSeatingPlan(
   );
 
   // Noms connus : la liste officielle, plus ceux saisis avant un changement de liste.
-  const names = [...graduates];
+  const names = new Map(graduates.map((name) => [graduateNameKey(name), canonicalGraduateName(name)]));
   for (const p of present) {
     for (const g of p.guest_of ?? []) {
-      if (!names.some((n) => nameKey(n) === nameKey(g))) names.push(g);
+      const key = graduateNameKey(g);
+      if (key && !names.has(key)) names.set(key, canonicalGraduateName(g));
     }
   }
 
   const alumni = present.filter((p) => p.participant_type === ParticipantType.ALUMNI);
+  const alumniByName = new Map<string, ParticipantRow[]>();
+  for (const a of alumni) {
+    const key = graduateNameKey(`${a.first_name} ${a.last_name}`);
+    const matches = alumniByName.get(key) ?? [];
+    matches.push(a);
+    alumniByName.set(key, matches);
+  }
   const matchedAlumni = new Set<string>();
 
-  const groups = names.map((graduate) => {
-    const key = nameKey(graduate);
-    const registration =
-      alumni.find((a) => nameKey(`${a.first_name} ${a.last_name}`) === key) ?? null;
+  const groups = Array.from(names, ([key, graduate]) => {
+    const matches = alumniByName.get(key);
+    const registration = matches?.length === 1 ? matches[0] ?? null : null;
     if (registration) matchedAlumni.add(registration.id);
     return {
       graduate,
@@ -81,7 +77,7 @@ export function buildSeatingPlan(
         .filter(
           (p) =>
             p.participant_type !== ParticipantType.ALUMNI &&
-            (p.guest_of ?? []).some((g) => nameKey(g) === key),
+            (p.guest_of ?? []).some((g) => graduateNameKey(g) === key),
         )
         .sort(byLastName),
     };
