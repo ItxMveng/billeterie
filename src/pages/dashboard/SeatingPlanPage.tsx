@@ -52,7 +52,7 @@ export function SeatingPlanPage() {
       for (const guest of g.guests) rows.push({ groupe: g.graduate, p: guest });
     }
     for (const p of plan.unassignedFamilies) rows.push({ groupe: 'Famille sans diplômé indiqué', p });
-    for (const p of plan.otherGraduates) rows.push({ groupe: 'Diplômé hors liste', p });
+    for (const p of plan.otherGraduates) rows.push({ groupe: 'Diplômé à rattacher', p });
     for (const p of plan.cpbaGuests) rows.push({ groupe: 'Invités CPBA', p });
     for (const p of plan.students) rows.push({ groupe: 'Étudiants', p });
 
@@ -154,8 +154,8 @@ export function SeatingPlanPage() {
             <SimpleGroup title="Étudiants" people={plan.students} ticketOf={ticketOf} />
             {plan.otherGraduates.length > 0 && (
               <SimpleGroup
-                title="Diplômés inscrits hors liste"
-                hint="Nom différent de la liste des diplômés : vérifiez l'orthographe."
+                title="Diplômés inscrits à rattacher"
+                hint="Ces personnes sont inscrites. Vérifiez à quel groupe rattacher chaque inscription."
                 people={plan.otherGraduates}
                 ticketOf={ticketOf}
               />

@@ -9,6 +9,7 @@
 import { requireSupabase } from '@/lib/supabase';
 import { toAppError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { canonicalGraduateHosts, storedGraduateNames } from '@/config/graduates';
 import type {
   ParticipantRow,
   PaymentRow,
@@ -61,6 +62,12 @@ export interface RegistrationResult {
   ticketNumber: string | null;
 }
 
+function withCanonicalHosts(participant: ParticipantRow): ParticipantRow {
+  return participant.guest_of
+    ? { ...participant, guest_of: canonicalGraduateHosts(participant.guest_of) }
+    : participant;
+}
+
 export const ParticipantService = {
   /** Inscription publique via RPC sécurisée. */
   async register(
@@ -111,7 +118,7 @@ export const ParticipantService = {
       logger.reportError(appError, { scope: 'ParticipantService.list' });
       throw appError;
     }
-    return (data ?? []) as ParticipantRow[];
+    return ((data ?? []) as ParticipantRow[]).map(withCanonicalHosts);
   },
 
   /**
@@ -129,7 +136,7 @@ export const ParticipantService = {
     if (filters.ticket_status) query = query.eq('ticket_status', filters.ticket_status);
     if (typeof filters.checked_in === 'boolean') query = query.eq('checked_in', filters.checked_in);
     if (filters.school_id) query = query.eq('school_id', filters.school_id);
-    if (filters.guest_of) query = query.contains('guest_of', [filters.guest_of]);
+    if (filters.guest_of) query = query.overlaps('guest_of', storedGraduateNames(filters.guest_of));
 
     if (filters.q && filters.q.trim()) {
       // Nettoyage : retire les caractères qui casseraient le filtre `.or()`.
@@ -155,7 +162,7 @@ export const ParticipantService = {
       logger.reportError(appError, { scope: 'ParticipantService.search' });
       throw appError;
     }
-    return (data ?? []) as ParticipantRow[];
+    return ((data ?? []) as ParticipantRow[]).map(withCanonicalHosts);
   },
 
   /** Fiche détaillée (participant + paiements + ticket + check-ins). */
@@ -179,7 +186,7 @@ export const ParticipantService = {
     ]);
 
     return {
-      participant: participant as ParticipantRow,
+      participant: withCanonicalHosts(participant as ParticipantRow),
       payments: (payments.data ?? []) as PaymentRow[],
       ticket: (ticket.data as TicketRow | null) ?? null,
       checkins: (checkins.data ?? []) as CheckinRow[],

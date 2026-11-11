@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildSeatingPlan, nameKey } from './seating';
+import { buildSeatingPlan } from './seating';
+import { GRADUATES, nameKey, storedGraduateNames } from '@/config/graduates';
 import type { ParticipantRow } from '@/types/database';
 import type { ParticipantType } from '@/types/enums';
 
@@ -40,12 +41,13 @@ function p(
   };
 }
 
-const GRADS = ['Adelphe FOGANG', 'Gelis MOMO'];
+const GRADS = ['Adelphe FOGANG', 'Gelis MELACHEU MOMO'];
 
 describe('nameKey', () => {
   it('ignore casse, accents et ordre prénom/nom', () => {
     expect(nameKey('Adelphe FOGANG')).toBe(nameKey('fogang  adelphe'));
-    expect(nameKey('Clémence YONKUE')).toBe(nameKey('Clemence Yonkue'));
+    expect(nameKey('Clémence YONKEU')).toBe(nameKey('Clemence Yonkeu'));
+    expect(nameKey('T. MBAGNIA Francis')).toBe(nameKey('Francis T MBAGNIA'));
   });
 });
 
@@ -59,7 +61,7 @@ describe('buildSeatingPlan', () => {
     const adelphe = plan.groups.find((g) => g.graduate === 'Adelphe FOGANG')!;
     expect(adelphe.graduateRegistration?.id).toBe(grad.id);
     expect(adelphe.guests.map((g) => g.id)).toEqual([friend.id, mum.id]); // tri par nom
-    const gelis = plan.groups.find((g) => g.graduate === 'Gelis MOMO')!;
+    const gelis = plan.groups.find((g) => g.graduate === 'Gelis MELACHEU MOMO')!;
     expect(gelis.graduateRegistration).toBeNull();
     expect(gelis.guests.map((g) => g.id)).toEqual([friend.id]);
   });
@@ -91,5 +93,38 @@ describe('buildSeatingPlan', () => {
     const extra = p('ALUMNI', 'Hors', 'Liste');
     const plan = buildSeatingPlan([extra], GRADS);
     expect(plan.otherGraduates.map((x) => x.id)).toEqual([extra.id]);
+  });
+
+  it('rattache les inscriptions et les invités enregistrés avant la correction des noms', () => {
+    const gelis = p('ALUMNI', 'Gelis', 'MELACHEU MOMO');
+    const clemence = p('ALUMNI', 'Clémence', 'YONKEU');
+    const francis = p('ALUMNI', 'Francis', 'T. MBAGNIA');
+    const guest = p('OTHER', 'X', 'Y', {
+      guest_of: ['Clemence YONKUE', 'Clémence YONKEU', 'Gelis MOMO', 'Francis TCHOUMMI'],
+    });
+    const plan = buildSeatingPlan([gelis, clemence, francis, guest], GRADUATES);
+
+    expect(plan.otherGraduates).toEqual([]);
+    expect(plan.groups.map((group) => group.graduate)).toEqual([...GRADUATES]);
+    for (const [name, registration] of [
+      ['Clémence YONKEU', clemence],
+      ['Gelis MELACHEU MOMO', gelis],
+      ['Francis T. MBAGNIA', francis],
+    ] as const) {
+      expect(plan.groups.find((group) => group.graduate === name)).toMatchObject({
+        graduateRegistration: registration,
+        guests: [guest],
+      });
+    }
+    expect(storedGraduateNames('Clémence YONKEU')).toEqual(['Clémence YONKEU', 'Clemence YONKUE']);
+  });
+
+  it('laisse les homonymes à vérifier et ne rapproche pas sur le seul prénom', () => {
+    const first = p('ALUMNI', 'Adelphe', 'Fogang');
+    const second = p('ALUMNI', 'Adelphe', 'Fogang');
+    const similar = p('ALUMNI', 'Gelis', 'Autrenom');
+    const plan = buildSeatingPlan([first, second, similar], GRADS);
+    expect(plan.groups.every((g) => g.graduateRegistration === null)).toBe(true);
+    expect(plan.otherGraduates.map((a) => a.id)).toEqual([similar.id, first.id, second.id]);
   });
 });
